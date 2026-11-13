@@ -184,7 +184,7 @@ pub(crate) fn get_adapter(provider: &str) -> Result<Adapter, String> {
 }
 
 pub(crate) fn all_provider_states() -> Vec<String> {
-    let mut providers = vec!["chatgpt", "claude", "gemini", "grok", "meta"]
+    let mut providers = vec!["chatgpt", "claude", "deepseek", "gemini", "grok", "meta"]
         .into_iter()
         .map(str::to_string)
         .collect::<Vec<_>>();
@@ -211,6 +211,7 @@ fn init_adapters() {
     for (provider, text) in [
         ("chatgpt", include_str!("../../adapters/chatgpt.json")),
         ("claude", include_str!("../../adapters/claude.json")),
+        ("deepseek", include_str!("../../adapters/deepseek.json")),
         ("gemini", include_str!("../../adapters/gemini.json")),
         ("grok", include_str!("../../adapters/grok.json")),
         ("meta", include_str!("../../adapters/meta.json")),
@@ -742,7 +743,7 @@ mod tests {
         assert!(!hosts.contains(&"auth.openai.com".to_string()));
         assert!(!hosts.contains(&"auth0.openai.com".to_string()));
 
-        for provider in ["chatgpt", "claude", "gemini", "grok", "meta"] {
+        for provider in ["chatgpt", "claude", "deepseek", "gemini", "grok", "meta"] {
             assert!(!app_hosts_for_provider(provider).unwrap().is_empty());
         }
     }
@@ -908,6 +909,10 @@ mod tests {
             ("grok", "https://auth.grokipedia.com/login"),
             ("grok", "https://gsi.google.com/client"),
             ("grok", "https://www.google.com/accounts/ServiceLogin"),
+            (
+                "deepseek",
+                "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b",
+            ),
             ("meta", "https://auth.meta.com/login"),
             ("meta", "https://auth.meta.ai/login"),
             ("meta", "https://www.facebook.com/login.php"),
@@ -943,6 +948,10 @@ mod tests {
             ("grok", "https://auth.x.ai/oauth/authorize"),
             ("grok", "https://auth.x.ai.evil.net/"),
             ("grok", "http://auth.x.ai/"),
+            ("deepseek", "https://challenges.cloudflare.com.evil.net/"),
+            ("deepseek", "http://challenges.cloudflare.com/"),
+            ("deepseek", "https://auth.openai.com/authorize"),
+            ("deepseek", "https://chat.deepseek.com.evil.net/"),
             ("gemini", "https://www.google.com/search"),
             ("gemini", "https://www.google.com/sorryevil"),
             ("gemini", "https://www.google.com.evil.net/sorry"),
@@ -1006,6 +1015,12 @@ mod tests {
                 "https://grok.com",
                 "https://grok.com/chat/123",
                 "http://grok.com/chat/123",
+            ),
+            (
+                "deepseek",
+                "https://chat.deepseek.com/sign_in",
+                "https://chat.deepseek.com/a/123",
+                "http://chat.deepseek.com/a/123",
             ),
             (
                 "meta",
@@ -1083,6 +1098,46 @@ mod tests {
         ] {
             let url = tauri::Url::parse(value).unwrap();
             assert!(!url_allowed_for_provider("meta", &url).unwrap(), "{value}");
+        }
+    }
+
+    #[test]
+    fn deepseek_initial_seed_is_registered_and_keeps_navigation_narrow() {
+        let deepseek = adapters().get("deepseek").expect("DeepSeek adapter is bundled");
+        assert_eq!(deepseek.display_name, "DeepSeek");
+        assert_eq!(deepseek.adapter_version, 1);
+        assert_eq!(deepseek.schema_version, 2);
+        assert_eq!(deepseek.urls.app, "https://chat.deepseek.com");
+        assert_eq!(deepseek.urls.login, "https://chat.deepseek.com/sign_in");
+        assert_eq!(
+            deepseek.urls.match_patterns,
+            vec!["chat.deepseek.com/*".to_string()]
+        );
+        assert_eq!(
+            deepseek.urls.sso_match,
+            vec!["challenges.cloudflare.com/*".to_string()]
+        );
+        let hosts = app_hosts_for_provider("deepseek").unwrap();
+        assert!(hosts.contains(&"chat.deepseek.com".to_string()));
+        assert!(!hosts.contains(&"challenges.cloudflare.com".to_string()));
+
+        for value in [
+            "https://chat.deepseek.com/",
+            "https://chat.deepseek.com/a/123?source=history",
+            "https://chat.deepseek.com/sign_in",
+        ] {
+            let url = tauri::Url::parse(value).unwrap();
+            assert!(url_allowed_for_provider("deepseek", &url).unwrap(), "{value}");
+        }
+
+        for value in [
+            "https://chat.deepseek.com.evil.net/",
+            "http://chat.deepseek.com/",
+            "https://chat.deepseek.com:8443/",
+            "https://user:pass@chat.deepseek.com/",
+        ] {
+            let url = tauri::Url::parse(value).unwrap();
+            assert!(!url_allowed_for_provider("deepseek", &url).unwrap(), "{value}");
         }
     }
 

@@ -40,7 +40,7 @@ Every `BridgeMessage` includes `v: 1` and a supported `action`. `payload` is `un
 
 [`runWorkflow(params: RunWorkflowParams): Promise<RunWorkflowResult>`](../src/workflow/index.ts) runs the graph for `mode`. Brainstorm uses `presetId: 'brainstorm'`, not a sixth `ChatMode`.
 
-The active lineup always contains exactly four providers. Use `targets` for a smaller Free-mode selection and derive `activeProviders` from the current standby setting.
+The active lineup always contains exactly five providers. Use `targets` for a smaller Free-mode selection and derive `activeProviders` from the current standby setting.
 
 ```typescript
 import { host } from './host';

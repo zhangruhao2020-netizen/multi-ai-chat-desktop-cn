@@ -6,6 +6,7 @@ import ensembleUrl from '../assets/themes/ai-sister/ensemble.jpg';
 import geminiAvatarUrl from '../assets/themes/ai-sister/gemini.webp';
 import grokAvatarUrl from '../assets/themes/ai-sister/grok.webp';
 import metaAvatarUrl from '../assets/themes/ai-sister/meta.webp';
+import deepseekAvatarUrl from '../assets/themes/ai-sister/deepseek.webp';
 import { useI18n } from '../i18n/context';
 
 // The ensemble remains the original four-character commemorative artwork, while
@@ -13,6 +14,7 @@ import { useI18n } from '../i18n/context';
 const AVATAR_URLS: Record<AIProvider, string> = {
   chatgpt: chatgptAvatarUrl,
   claude: claudeAvatarUrl,
+  deepseek: deepseekAvatarUrl,
   gemini: geminiAvatarUrl,
   grok: grokAvatarUrl,
   meta: metaAvatarUrl,
@@ -24,10 +26,12 @@ interface ProviderAccent {
 }
 
 const META_ACCENT: ProviderAccent = { solid: '#1877f2', shadow: 'rgba(24, 119, 242, 0.5)' };
+const DEEPSEEK_ACCENT: ProviderAccent = { solid: '#4d6bfe', shadow: 'rgba(77, 107, 254, 0.5)' };
 
 const PROVIDER_ACCENTS: Record<AIProvider, ProviderAccent> = {
   chatgpt: { solid: '#2dd4bf', shadow: 'rgba(45, 212, 191, 0.48)' },
   claude: { solid: '#f6b94b', shadow: 'rgba(246, 185, 75, 0.48)' },
+  deepseek: DEEPSEEK_ACCENT,
   gemini: { solid: '#a78bfa', shadow: 'rgba(167, 139, 250, 0.5)' },
   grok: { solid: '#8b5cf6', shadow: 'rgba(139, 92, 246, 0.5)' },
   meta: META_ACCENT,

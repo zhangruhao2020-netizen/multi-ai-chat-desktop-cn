@@ -2,7 +2,7 @@
 
 [English](./README.md) · [繁體中文](./README.zh-TW.md) · [简体中文](./README.zh-CN.md) · **日本語** · [Deutsch](./README.de.md)
 
-一度質問するだけで、ログイン済みの4つのAI Webセッションが回答し、レビューし、反論しながら結果を磨きます。**ChatGPT、Claude、Gemini、Grokが引き続きデフォルトで、Meta AIはSettingsで選べる実験的な5番目のスタンバイです。** Multi-AI Chat Desktopは、4つのチャットを横に並べただけではない、Tauri 2製のマルチAIワークフローハブです。
+一度質問するだけで、ログイン済みの5つのAI Webセッションが回答し、レビューし、反論しながら結果を磨きます。**ChatGPT、Claude、DeepSeek、Gemini、Grokがデフォルトで、Meta AIはSettingsで選べる実験的なスタンバイです。** Multi-AI Chat Desktopは、5つのチャットを横に並べただけではない、Tauri 2製のマルチAIワークフローハブです。
 
 [**公式サイトを見る →**](https://ted-h-com.github.io/multi-ai-chat-desktop/?lang=ja) · [v1.9.8をダウンロード](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.8) · [すべてのリリース](https://github.com/TED-H-com/multi-ai-chat-desktop/releases) · MIT · APIキー不要 · アナリティクスなし
 
@@ -23,6 +23,8 @@
 初回は各プロバイダーのpaneを開き、実際のプロバイダーページでログインします。認証情報とcookieはプロバイダーごとに分離されたローカルWebView profileに残り、Multi-AI Chat Desktopがパスワードを尋ねることはありません。
 
 実験的なMeta AIでは、ゲスト、メール／携帯、またはFacebook／Instagramのログインを**Metaペイン内**で完了してください。別のブラウザでログインしても、隔離されたapp profileには戻りません。
+
+DeepSeekでは、電話番号／メール、Google、またはAppleのログインを**DeepSeekペイン内**で完了してください。別のブラウザでログインしても、隔離されたapp profileには戻りません。
 
 ### macOSでの初回起動
 
@@ -57,8 +59,9 @@ Windows portable版にはアプリ内更新UIがありません。[GitHub Releas
 - **Metaログインを認識。** 表示されて編集できる入力欄があればログイン済みです。ログインボタンやinertな欄が残っていても同じです。
 - **Metaログインはペイン内。** Facebook／Instagramのログインはアプリ内で完了します。別のブラウザでログインしても、隔離されたMeta profileには戻れません。
 - **Grok Heavy再開時のタイマー。** stopが復元して生成が続き、中間回答のテキストが変わらない場合、古い静穏タイマーを取り消して生成終了を待ちます。
-- **任意のMeta AIスタンバイ。** 選択肢は5、同時に有効なのは4つ。従来の4つがデフォルトのまま、Settingsで1つだけ入れ替えできます。Profileは保持され、roleとtargetsは現在の4つに修復されます。
-- **Portraitと診断。** Meta AI専用のportraitがあります。Event logとdebug bundleはpromptや返信を保存せず、Meta AIとして表示します。
+- **任意のMeta AIスタンバイ。** 選択肢は6、同時に有効なのは5つ。5つがデフォルトのまま、Settingsで1つだけ入れ替えできます。Profileは保持され、roleとtargetsは現在の5つに修復されます。
+- **DeepSeekがデフォルトに加入。** DeepSeek Webチャット（chat.deepseek.com）はデフォルトのproviderです。composer、送信ボタン、アシスタントメッセージのセレクタは公開のdscli-agentデフォルトに準拠し、このアプリでログイン済みセッションによる検証はまだ行われていません。
+- **Portraitと診断。** Meta AIとDeepSeekそれぞれ専用のportraitがあります。Event logとdebug bundleはpromptや返信を保存せず、それぞれの名前で表示します。
 
 詳細は[リリースノート](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.6)をご覧ください。
 
@@ -80,7 +83,7 @@ Windows portable版にはアプリ内更新UIがありません。[GitHub Releas
 - **会話中心のワークスペース。** Transcriptを画面全体へ拡大でき、provider chipで実ページと現在の読書位置を識別できます。
 - **6プリセット、5つの安定モード。** Free、Debate、Consult、Coding、Roundtableと、凍結済みruntime上に追加されたBrainstorm presetです。
 - **Roleを設定可能。** 4-roleの初期設定ではChatGPT、Claude、Gemini、Grokを1回ずつ使います。順次roleは同じプロバイダーを再利用できますが、並列roleは別々である必要があります。
-- **任意のMeta AIスタンバイ。** Settingsでデフォルトのproviderを1つだけ入れ替えできます。Profileは保持され、roleとtargetsは有効な4つに修復されます。
+- **任意のMeta AIスタンバイ。** Settingsでデフォルトのproviderを1つだけ入れ替えできます。Profileは保持され、roleとtargetsは有効な5つに修復されます。
 - **ローカルで会話を継続。** 新しい会話を始めるか、このPCだけに保存された最大30件のtranscriptを再開できます。再開後のfollow-upには同じsessionの限定的な文脈だけが渡ります。
 - **読みやすく忠実な出力。** 安全なsemantic Markdownで見出し、ネストしたlist、link、quote、fenced code、数式source、横scroll可能なtableを保持します。ChatGPTの画像のみの回答も完了できます。
 - **再現可能な作業。** Opt-in snapshotと固定済みprivacy tier、replay、checkpoint、Markdown export、provider診断、重複除去された2,000件のin-memory logを利用できます。
@@ -101,7 +104,7 @@ Windows portable版にはアプリ内更新UIがありません。[GitHub Releas
 
 構造化workflowは開始前に必要な全roleを確認します。利用できないプロバイダーがあれば、その名前を示し、open／login、role再割り当て、別modeへの切り替えを案内します。暗黙のプロバイダー置換はしません。通常の構造化workflowは継続するprovider errorで停止し、Brainstormだけは再試行・スキップ・キャンセルの明示選択まで一時停止します。
 
-Brainstormは意図的に最も重いpresetです。標準の4 provider sessionをすべてログイン済みにし、約 **45〜90分** を見込んでください。48件の復旧経路には自動テストがあります。v1.9.6では実アカウントによるChatGPT↔Grokの遅いハンドオフ確認は新たに実施していません。
+Brainstormは意図的に最も重いpresetです。標準の5 provider sessionをすべてログイン済みにし、約 **45〜90分** を見込んでください。48件の復旧経路には自動テストがあります。v1.9.6では実アカウントによるChatGPT↔Grokの遅いハンドオフ確認は新たに実施していません。
 
 Workflow完了後は画面下のcomposerから同じapp conversationを続けられます。文脈を一新する場合は「**新しい会話**」を選んでください。
 
@@ -124,9 +127,10 @@ Workflow完了後は画面下のcomposerから同じapp conversationを続けら
 - **Windows x64** はpackaged launchの検証実績がありますが、未署名artifactがSmartScreenを表示する場合があります。
 - **macOS Apple Silicon** は部分検証です。DMGはad-hoc署名済み・notarize未実施です。以前の実機報告ではアプリを開きChatGPT、Claude、Geminiへloginできましたが、GrokはCloudflareで停止しました。現在のGrok復旧もApple Siliconでlive retestが必要です。Intel artifactはありません。
 - **Linux x86_64** はCI packagingのみ検証済みで、maintainerによる新しい実機起動報告はありません。
-- v1.9.6の変更は自動テストのカバーのみで、live再テストしていません。Chat/Workアカウントは用意できず、ログイン済みのGrokページもliveで記録していません。次のlive確認は、Chat/Workアカウントがpromptを1件自動送信することと、ログイン済みのGrokペインがReadyのままであることです。インストール済みアプリは2026-09-30以降、adapter update（起動時と6時間ごと）を通じてGrokとChatGPTのadapter更新を受け取ります。ただしChatGPT Chat/Workのengine変更にはv1.9.6が必要です。providerのengineが無言または固まり、ページが置き換わらない場合、そのstepはこれまで通り10分の非活動ウィンドウと60分の絶対上限まで待ちます。Metaは `inputStrategy: "default"` のままです。Metaのstop、new-session reset、profile persistenceは未検証のままで、Grok Heavyは実行していません。以前のWindows packaged launch証拠、以前のApple SiliconでのChatGPT／Claude／Gemini login報告（GrokはCloudflareで停止）、LinuxのCI packagingのみ、が現在の記録です。v1.9.6に新しいWindows、macOS、Linuxの起動チェックはありません。
+- v1.9.6の変更は自動テストのカバーのみで、live再テストしていません。Chat/Workアカウントは用意できず、ログイン済みのGrokページもliveで記録していません。次のlive確認は、Chat/Workアカウントがpromptを1件自動送信することと、ログイン済みのGrokペインがReadyのままであることです。インストール済みアプリは2026-09-30以降、adapter update（起動時と6時間ごと）を通じてGrokとChatGPTのadapter更新を受け取ります。ただしChatGPT Chat/Workのengine変更にはv1.9.6が必要です。providerのengineが無言または固まり、ページが置き換わらない場合、そのstepはこれまで通り10分の非活動ウィンドウと60分の絶対上限まで待ちます。MetaとDeepSeekは `inputStrategy: "default"` のままです。Metaのstop、new-session reset、profile persistenceは未検証のままで、Grok Heavyは実行していません。以前のWindows packaged launch証拠、以前のApple SiliconでのChatGPT／Claude／Gemini login報告（GrokはCloudflareで停止）、LinuxのCI packagingのみ、が現在の記録です。v1.9.6に新しいWindows、macOS、Linuxの起動チェックはありません。
 - Meta AIのゲスト、メール／携帯、またはFacebook／InstagramログインはMetaペイン内で完了する必要があります。別のブラウザでログインしてもappには戻れません。
-- Snapshot／replay／checkpointは既存互換性だけを保守します。実験的なMeta AIスタンバイ以外に、marketplace、graph editor、さらなるprovider追加、新persistence schema、組み込みterminal agent、telemetry、Developer ID／notarization program、self-updaterを追加する予定はありません。
+- DeepSeekの電話番号／メール、Google、またはAppleログインはDeepSeekペイン内で完了する必要があります。別のブラウザでログインしてもappには戻れません。DeepSeekのセレクタは公開のdscli-agentデフォルト（dscli-agent 0.6.0）に準拠し、未ログインのログインページは2026-11-13に確認済みですが、このアプリでログイン済みセッションによる送受信はまだ行われていません。
+- Snapshot／replay／checkpointは既存互換性だけを保守します。DeepSeekデフォルトproviderと実験的なMeta AIスタンバイ以外に、marketplace、graph editor、さらなるprovider追加、新persistence schema、組み込みterminal agent、telemetry、Developer ID／notarization program、self-updaterを追加する予定はありません。
 
 根拠は[互換性マトリクス](./docs/COMPATIBILITY.md)をご覧ください。CIや自動テストを、実際のprovider accountやdesktop deviceを操作した証拠として扱うことはありません。
 

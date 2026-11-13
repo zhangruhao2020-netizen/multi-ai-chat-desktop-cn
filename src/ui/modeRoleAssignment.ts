@@ -5,6 +5,7 @@ import {
   DEFAULT_CONSULT_ROLES,
   DEFAULT_DEBATE_ROLES,
   DEFAULT_ROUNDTABLE_ROLES,
+  DEFAULT_STANDBY_PROVIDER,
 } from '../../shared/constants';
 import type { I18nKey } from '../i18n/keys';
 
@@ -135,7 +136,7 @@ export function assignModeRole(
 
 /**
  * Swap a provider out of every persisted collaboration seat. This is used
- * when the four-active-provider lineup changes: the previous standby takes
+ * when the five-active-provider lineup changes: the previous standby takes
  * the exact seats that belonged to the newly selected standby provider.
  */
 export function replaceModeRoleProvider(
@@ -155,7 +156,13 @@ export function replaceModeRoleProvider(
   return next as unknown as ModeRoleAssignments;
 }
 
-/** Repair corrupted or pre-feature settings without ever assigning standby. */
+/**
+ * Repair corrupted or pre-feature settings without ever assigning standby.
+ * A vacated seat goes to the default standby provider first: it is the
+ * provider a standby swap activates. Without this preference an
+ * already-active provider with no default seat (DeepSeek) would claim the
+ * seat before the swapped-in provider.
+ */
 export function keepModeRolesWithinProviders(
   assignments: ModeRoleAssignments,
   providers: readonly AIProvider[],
@@ -178,9 +185,13 @@ export function keepModeRolesWithinProviders(
         continue;
       }
       const alreadyUsed = new Set(Object.values(repaired));
+      const orderedProviders = [
+        DEFAULT_STANDBY_PROVIDER,
+        ...providers.filter((provider) => provider !== DEFAULT_STANDBY_PROVIDER),
+      ].filter((provider) => providers.includes(provider));
       const replacement =
-        providers.find((provider) => !providersAlreadyAssigned.has(provider)) ??
-        providers.find((provider) => !alreadyUsed.has(provider)) ??
+        orderedProviders.find((provider) => !providersAlreadyAssigned.has(provider)) ??
+        orderedProviders.find((provider) => !alreadyUsed.has(provider)) ??
         providers[0];
       repaired[role] = replacement;
       providersAlreadyAssigned.add(replacement);

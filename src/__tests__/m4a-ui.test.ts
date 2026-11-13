@@ -36,7 +36,7 @@ import {
   type StepTimeoutEvent,
 } from '../workflow/stepTimeout';
 
-const providers: AIProvider[] = ['chatgpt', 'claude', 'gemini', 'grok'];
+const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'gemini', 'grok'];
 
 function state(provider: AIProvider, sendable = true): ProviderState {
   return {
@@ -153,15 +153,15 @@ describe('M4a UI helpers', () => {
     expect(model.aliased).toEqual([{ provider: 'chatgpt', label: 'ChatGPT', reason: t('preflight.aliasedProvider', 'en') }]);
   });
 
-  it('defaults free targets to four shipped sendable providers and toggles the selected send list', () => {
+  it('defaults free targets to five shipped sendable providers and toggles the selected send list', () => {
     const snapshot = states({ claude: state('claude', false) });
-    expect(defaultTargets(snapshot, [...DEFAULT_FREE_TARGET_PROVIDERS])).toEqual(['chatgpt', 'gemini', 'grok']);
+    expect(defaultTargets(snapshot, [...DEFAULT_FREE_TARGET_PROVIDERS])).toEqual(['chatgpt', 'deepseek', 'gemini', 'grok']);
 
     let selected = defaultTargets(snapshot, [...DEFAULT_FREE_TARGET_PROVIDERS]);
     selected = toggleTarget(selected, 'gemini');
-    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'grok']);
+    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'deepseek', 'grok']);
     selected = toggleTarget(selected, 'gemini');
-    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'grok', 'gemini']);
+    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'deepseek', 'grok', 'gemini']);
     expect(freeModeTargets([], snapshot)).toEqual([]);
   });
 
@@ -176,7 +176,7 @@ describe('M4a UI helpers', () => {
       { targets: [], defaultsInitialized: false, userTouched: false },
       defaultTargets(chatgptOnly, [...DEFAULT_FREE_TARGET_PROVIDERS]),
     );
-    expect(selection.targets).toEqual(['chatgpt']);
+    expect(selection.targets).toEqual(['chatgpt', 'deepseek']);
 
     selection = markFreeTargetsTouched(selection, ['grok']);
     const grokOnly = states({

@@ -2,7 +2,7 @@
 
 [English](./README.md) · [繁體中文](./README.zh-TW.md) · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md) · **Deutsch**
 
-Eine Frage genügt: Vier angemeldete KI-Websitzungen antworten, prüfen, widersprechen und verfeinern das Ergebnis gemeinsam. **ChatGPT, Claude, Gemini und Grok bleiben die Standardauswahl; Meta AI ist eine experimentelle fünfte Standby-Option in den Einstellungen.** Multi-AI Chat Desktop ist ein Workflow-Hub auf Basis von Tauri 2, nicht bloß vier nebeneinander angeordnete Chats.
+Eine Frage genügt: Fünf angemeldete KI-Websitzungen antworten, prüfen, widersprechen und verfeinern das Ergebnis gemeinsam. **ChatGPT, Claude, DeepSeek, Gemini und Grok sind die Standardauswahl; Meta AI ist eine experimentelle Standby-Option in den Einstellungen.** Multi-AI Chat Desktop ist ein Workflow-Hub auf Basis von Tauri 2, nicht bloß fünf nebeneinander angeordnete Chats.
 
 [**Offizielle Website öffnen →**](https://ted-h-com.github.io/multi-ai-chat-desktop/?lang=de) · [v1.9.8 herunterladen](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.8) · [Alle Releases](https://github.com/TED-H-com/multi-ai-chat-desktop/releases) · MIT · keine API-Schlüssel · keine Analyse
 
@@ -23,6 +23,8 @@ Die aktuelle stabile Version steht auf der [**Downloadseite für v1.9.8**](https
 Öffne beim ersten Start jeden Anbieter-Pane einmal und melde dich direkt auf der echten Anbieterseite an. Zugangsdaten und Cookies bleiben im getrennten lokalen WebView-Profil des jeweiligen Anbieters; Multi-AI Chat Desktop fragt nie nach deinem Passwort.
 
 Beim experimentellen Meta-AI-Pfad die Gast-, E-Mail-/Mobil- oder Facebook/Instagram-Anmeldung **im Meta-Fenster** abschließen. Eine Anmeldung in einem anderen Browser kehrt nicht ins isolierte App-Profil zurück.
+
+Für DeepSeek die Telefon-/E-Mail-, Google- oder Apple-Anmeldung **im DeepSeek-Fenster** abschließen. Eine Anmeldung in einem anderen Browser kehrt nicht ins isolierte App-Profil zurück.
 
 ### Erster Start unter macOS
 
@@ -57,8 +59,9 @@ Für die Engine- und Bridge-Korrekturen ist das Desktop-Update erforderlich; ein
 - **Meta-Anmeldung wird erkannt.** Ein sichtbares, bearbeitbares Eingabefeld gilt als angemeldet, auch wenn ein Anmeldebutton oder ein inertes Feld bleibt.
 - **Meta-Anmeldung bleibt im Fenster.** Facebook- und Instagram-Anmeldung werden in der App abgeschlossen. Eine Anmeldung in einem anderen Browser kehrt nicht ins isolierte Meta-Profil zurück.
 - **Grok-Heavy-Fortsetzungs-Timer.** Stellt Grok die Stop-Kontrolle wieder her und erzeugt weiter, ohne den Zwischentext zu ändern, werden veraltete Ruhe-Timer verworfen; die App wartet erneut auf das Ende der Erzeugung.
-- **Optionaler Meta-AI-Standby.** Fünf Auswahlmöglichkeiten, immer genau vier aktiv. Die ursprünglichen vier bleiben Standard; in den Einstellungen kann genau ein Anbieter getauscht werden. Profile bleiben erhalten, Rollen und Ziele werden auf die aktuelle Auswahl repariert.
-- **Porträt und Diagnose.** Meta AI hat ein eigenes Porträt. Ereignisprotokoll und Debug-Bundle kennzeichnen es als Meta AI, ohne Prompts oder Antworten zu speichern.
+- **Optionaler Meta-AI-Standby.** Sechs Auswahlmöglichkeiten, immer genau fünf aktiv. Die fünf bleiben Standard; in den Einstellungen kann genau ein Anbieter getauscht werden. Profile bleiben erhalten, Rollen und Ziele werden auf die aktuelle Auswahl repariert.
+- **DeepSeek wird Teil der Standardauswahl.** Der DeepSeek-Webchat (chat.deepseek.com) ist ein Standardanbieter. Seine Selektoren für Eingabefeld, Senden und Assistentenantwort folgen den öffentlichen dscli-agent-Standards; sie wurden in dieser App noch nicht mit einer angemeldeten Sitzung geprüft.
+- **Porträt und Diagnose.** Meta AI und DeepSeek haben jeweils ein eigenes Porträt. Ereignisprotokoll und Debug-Bundle kennzeichnen sie namentlich, ohne Prompts oder Antworten zu speichern.
 
 Die [Release Notes](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.6) beschreiben Änderungen und Grenzen.
 
@@ -80,7 +83,7 @@ Wähle Desktop für einen eigenen Arbeitsbereich und den vollständigen lokalen 
 - **Gesprächsorientierter Arbeitsbereich.** Das Transkript kann das gesamte Fenster nutzen, während Provider-Chips die echte Seite und aktuelle Leseposition erkennbar halten.
 - **Sechs Presets, fünf stabile Modi.** Frei, Debatte, Beratung, Coding, Rundtisch sowie das zusätzliche Brainstorming-Preset auf der eingefrorenen Workflow-Laufzeit.
 - **Konfigurierbare Rollen.** Standardbelegungen mit vier Rollen verwenden ChatGPT, Claude, Gemini und Grok jeweils einmal. Serielle Rollen dürfen einen Anbieter wiederverwenden; parallel laufende Rollen müssen getrennt bleiben.
-- **Optionaler Meta-AI-Standby.** In den Einstellungen kann genau ein Standardanbieter ersetzt werden. Profile bleiben erhalten; Rollen und Ziele werden auf die aktiven vier repariert.
+- **Optionaler Meta-AI-Standby.** In den Einstellungen kann genau ein Standardanbieter ersetzt werden. Profile bleiben erhalten; Rollen und Ziele werden auf die aktiven fünf repariert.
 - **Lokale Fortsetzung.** Beginne ein leeres Gespräch oder öffne bis zu 30 ausschließlich lokal gespeicherte Transkripte. Fortsetzungen erhalten begrenzten Kontext nur aus derselben Sitzung.
 - **Lesbare, getreue Ausgabe.** Sicheres semantisches Markdown bewahrt Überschriften, verschachtelte Listen, Links, Zitate, fenced code, mathematischen Quelltext und horizontal scrollbar Tabellen. Auch reine ChatGPT-Bildantworten können abgeschlossen werden.
 - **Reproduzierbare Arbeit.** Optionale Snapshots mit den eingefrorenen Datenschutzstufen, Replay, Checkpoints, Markdown-Export, Anbieterdialognostik und ein dedupliziertes In-Memory-Log mit 2.000 Ereignissen bleiben verfügbar.
@@ -101,7 +104,7 @@ Wähle Desktop für einen eigenen Arbeitsbereich und den vollständigen lokalen 
 
 Strukturierte Workflows prüfen vorab jede notwendige Rolle. Ist ein Anbieter nicht verfügbar, benennt die App ihn und bietet Öffnen/Anmelden, Neuzuordnung oder einen anderen Modus an; sie ersetzt Anbieter nie stillschweigend. Normale strukturierte Workflows enden bei einem dauerhaften Anbieterfehler. Brainstorming pausiert dagegen bis zur ausdrücklichen Wahl von Wiederholen, Überspringen oder Abbrechen.
 
-Brainstorming ist absichtlich das schwerste Preset: Halte alle vier standardmäßigen Anbietersitzungen angemeldet und plane etwa **45 bis 90 Minuten** ein. Der Wiederherstellungspfad mit 48 Beiträgen ist automatisiert getestet; v1.9.6 fügt keine neue langsame ChatGPT↔Grok-Übergabe mit echten Konten hinzu.
+Brainstorming ist absichtlich das schwerste Preset: Halte alle fünf standardmäßigen Anbietersitzungen angemeldet und plane etwa **45 bis 90 Minuten** ein. Der Wiederherstellungspfad mit 48 Beiträgen ist automatisiert getestet; v1.9.6 fügt keine neue langsame ChatGPT↔Grok-Übergabe mit echten Konten hinzu.
 
 Nach Abschluss kannst du über den Composer unten dasselbe App-Gespräch fortsetzen. **Neues Gespräch** beginnt mit sauberem Sitzungskontext.
 
@@ -124,9 +127,10 @@ Melde Schwachstellen gemäß [SECURITY.md](./SECURITY.md) privat. Veröffentlich
 - Für **Windows x64** gibt es verifizierte Paket-Starts; unsignierte Artefakte können dennoch SmartScreen auslösen.
 - **macOS Apple Silicon** ist teilweise geprüft. Das DMG ist ad-hoc signiert, nicht notarisiert. Ein früherer Gerätebericht konnte die App öffnen und ChatGPT, Claude und Gemini anmelden, während Grok bei Cloudflare hängen blieb. Die aktuelle Grok-Wiederherstellung benötigt weiterhin einen Live-Retest auf Apple Silicon. Es gibt kein Intel-Artefakt.
 - **Linux x86_64** ist nur durch CI-Paketierung bestätigt; ein neuer realer Startbericht eines Maintainers fehlt.
-- Die Änderungen in v1.9.6 haben nur automatisierte Abdeckung und wurden nicht live erneut geprüft. Es stand kein Chat/Work-Konto zur Verfügung, und keine angemeldete Grok-Seite wurde live aufgezeichnet. Deshalb ist die nächste Live-Prüfung ein Chat/Work-Konto, das einen Prompt automatisch sendet, und ein angemeldetes Grok-Pane, das Ready bleibt. Installierte Apps erhalten die Grok- und ChatGPT-Adapter-Updates seit 2026-09-30 über das Adapter-Update (beim Start und alle sechs Stunden), aber die Engine-Änderungen für ChatGPT Chat/Work brauchen v1.9.6. Geht die Engine eines Anbieters stumm oder klemmt, ohne dass die Seite ersetzt wird, wartet der Schritt weiter das 10-Minuten-Inaktivitätsfenster und die absolute 60-Minuten-Grenze ab. Meta bleibt auf `inputStrategy: "default"`. Meta-Stop, das Zurücksetzen auf eine neue Sitzung und die Profilpersistenz bleiben unverifiziert, und Grok Heavy wurde nicht ausgeführt. Frühere Windows-Paketstarts, der frühere Apple-Silicon-Bericht zu ChatGPT-/Claude-/Gemini-Anmeldung (Grok blieb bei Cloudflare) und die Linux-CI-Paketierung bleiben der aktuelle Nachweis. Für v1.9.6 gibt es keine neue Startprüfung unter Windows, macOS oder Linux.
+- Die Änderungen in v1.9.6 haben nur automatisierte Abdeckung und wurden nicht live erneut geprüft. Es stand kein Chat/Work-Konto zur Verfügung, und keine angemeldete Grok-Seite wurde live aufgezeichnet. Deshalb ist die nächste Live-Prüfung ein Chat/Work-Konto, das einen Prompt automatisch sendet, und ein angemeldetes Grok-Pane, das Ready bleibt. Installierte Apps erhalten die Grok- und ChatGPT-Adapter-Updates seit 2026-09-30 über das Adapter-Update (beim Start und alle sechs Stunden), aber die Engine-Änderungen für ChatGPT Chat/Work brauchen v1.9.6. Geht die Engine eines Anbieters stumm oder klemmt, ohne dass die Seite ersetzt wird, wartet der Schritt weiter das 10-Minuten-Inaktivitätsfenster und die absolute 60-Minuten-Grenze ab. Meta und DeepSeek bleiben auf `inputStrategy: "default"`. Meta-Stop, das Zurücksetzen auf eine neue Sitzung und die Profilpersistenz bleiben unverifiziert, und Grok Heavy wurde nicht ausgeführt. Frühere Windows-Paketstarts, der frühere Apple-Silicon-Bericht zu ChatGPT-/Claude-/Gemini-Anmeldung (Grok blieb bei Cloudflare) und die Linux-CI-Paketierung bleiben der aktuelle Nachweis. Für v1.9.6 gibt es keine neue Startprüfung unter Windows, macOS oder Linux.
 - Gast-, E-Mail-/Mobil- oder Facebook/Instagram-Anmeldung von Meta AI muss im Meta-Fenster erfolgen. Eine Anmeldung in einem anderen Browser kehrt nicht in die App zurück.
-- Snapshot/Replay/Checkpoint werden nur in ihrer ausgelieferten Form kompatibel gehalten. Über den experimentellen Meta-AI-Standby hinaus sind für diese funktionsgefrorene Ausgabe weder Marketplace, Graph-Editor, weitere Anbieter, neues Persistenzschema, eingebetteter Terminal-Agent, Telemetrie, Developer-ID-/Notarisierungsprogramm noch Self-Updater geplant.
+- Die Telefon-/E-Mail-, Google- oder Apple-Anmeldung von DeepSeek muss im DeepSeek-Fenster erfolgen. Eine Anmeldung in einem anderen Browser kehrt nicht in die App zurück. Die DeepSeek-Selektoren stammen aus den öffentlichen dscli-agent-Standards (dscli-agent 0.6.0); die abgemeldete Anmeldeseite wurde am 2026-11-13 geprüft, aber in dieser App wurde noch kein Senden/Empfangen mit angemeldeter DeepSeek-Sitzung durchgeführt.
+- Snapshot/Replay/Checkpoint werden nur in ihrer ausgelieferten Form kompatibel gehalten. Über den DeepSeek-Standardanbieter und den experimentellen Meta-AI-Standby hinaus sind für diese funktionsgefrorene Ausgabe weder Marketplace, Graph-Editor, weitere Anbieter, neues Persistenzschema, eingebetteter Terminal-Agent, Telemetrie, Developer-ID-/Notarisierungsprogramm noch Self-Updater geplant.
 
 Die evidenzbasierte [Kompatibilitätsmatrix](./docs/COMPATIBILITY.md) enthält Details. CI und automatisierte Tests werden nie als Beleg dafür dargestellt, dass ein echtes Anbieterkonto oder Desktopgerät benutzt wurde.
 

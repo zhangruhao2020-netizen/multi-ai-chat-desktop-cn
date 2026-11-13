@@ -2,7 +2,7 @@
 
 [English](./README.md) · **繁體中文** · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [Deutsch](./README.de.md)
 
-只問一次，讓四個已登入的 AI 網頁 session 互相回答、審查、質疑，再一起收斂結果。**ChatGPT、Claude、Gemini、Grok 仍是預設陣容；Meta AI 是 Settings 裡實驗性的第五家備用選項。** Multi-AI Chat Desktop 是以 Tauri 2 打造的多 AI workflow 中樞，不只是把四個聊天視窗並排。
+只問一次，讓五個已登入的 AI 網頁 session 互相回答、審查、質疑，再一起收斂結果。**ChatGPT、Claude、DeepSeek、Gemini、Grok 是預設陣容；Meta AI 是 Settings 裡實驗性的備用選項。** Multi-AI Chat Desktop 是以 Tauri 2 打造的多 AI workflow 中樞，不只是把五個聊天視窗並排。
 
 [**前往官方網站 →**](https://ted-h-com.github.io/multi-ai-chat-desktop/?lang=zh-TW) · [下載 v1.9.8](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.8) · [所有版本](https://github.com/TED-H-com/multi-ai-chat-desktop/releases) · MIT · 不需 API Key · 無分析追蹤
 
@@ -23,6 +23,8 @@
 第一次使用時，請逐一打開 provider pane，直接在 provider 的真實頁面登入。憑證與 cookie 只留在該 provider 的獨立本機 WebView profile；Multi-AI Chat Desktop 不會向你索取密碼。
 
 使用實驗性的 Meta AI 時，請在 **Meta 窗格內** 完成訪客、Email／手機或 Facebook／Instagram 登入。在別的瀏覽器登入無法回到 app 的隔離 profile。
+
+使用 DeepSeek 時，請在 **DeepSeek 窗格內** 完成手機／Email、Google 或 Apple 登入。在別的瀏覽器登入無法回到 app 的隔離 profile。
 
 ### macOS 第一次啟動
 
@@ -57,8 +59,9 @@ Windows portable 版不顯示 app 內更新控制，請自行到 [GitHub Release
 - **Meta 登入會被認得。** 可見、可編輯的輸入框會標成已登入，即使頁面上還留著登入按鈕或 inert 欄位。
 - **Meta 登入留在窗格內。** Facebook／Instagram 登入在 app 內完成。在別的瀏覽器登入無法回到隔離的 Meta profile。
 - **Grok Heavy 恢復生成的計時器。** 若 Grok 恢復 stop 控制並繼續生成、但中間答案文字沒變，會取消過期的靜默計時器，再等生成真正結束。
-- **可選的 Meta AI 備用。** 五家可選、同時只啟用四家。原本四家仍是預設；Settings 可替換其中一家。Profile 會保留，角色與 targets 會修到目前陣容。
-- **Portrait 與診斷。** Meta AI 有獨立 portrait。Event log 與 debug bundle 會標成 Meta AI，不儲存 prompt 或回覆。
+- **可選的 Meta AI 備用。** 六家可選、同時只啟用五家。原本五家仍是預設；Settings 可替換其中一家。Profile 會保留，角色與 targets 會修到目前陣容。
+- **DeepSeek 加入預設陣容。** DeepSeek 網頁版（chat.deepseek.com）是預設 provider。其輸入框、傳送按鈕與助手訊息 selector 沿用公開的 dscli-agent 預設值，尚未在本 app 以登入 session 驗證過。
+- **Portrait 與診斷。** Meta AI 與 DeepSeek 各有獨立 portrait。Event log 與 debug bundle 會標出它們，不儲存 prompt 或回覆。
 
 完整內容請見[發布說明](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.6)。
 
@@ -80,7 +83,7 @@ Windows portable 版不顯示 app 內更新控制，請自行到 [GitHub Release
 - **以對話為主的工作區。** Transcript 可放大到整個視窗，provider chip 讓真實頁面與目前閱讀位置都容易辨識。
 - **六個預設、五種穩定模式。** 自由分送、四方辯證、多方諮詢、Coding、道理辯證，以及建立在凍結 runtime 上的額外腦力激盪預設。
 - **可自訂角色。** 四角色預設會讓 ChatGPT、Claude、Gemini、Grok 各擔任一次；依序執行的角色可重複使用同一家，同時執行的角色必須分開。
-- **可選的 Meta AI 備用。** Settings 可替換恰好一家預設 provider。Profile 會保留；角色與 targets 會修到目前啟用的四家。
+- **可選的 Meta AI 備用。** Settings 可替換恰好一家預設 provider。Profile 會保留；角色與 targets 會修到目前啟用的五家。
 - **本機 session 延續。** 可開始乾淨對話，或打開最多 30 份只存在本機的 transcript。恢復後的追問只會取得同一 session 的有限上下文。
 - **可讀且忠實的輸出。** 安全的 semantic Markdown 支援標題、巢狀清單、連結、引用、fenced code 與可橫向捲動表格，並保留數學式原始內容；ChatGPT 只產生圖片時也能正常完成。
 - **可重現工作。** 可選的 snapshot 與固定隱私分級、replay、checkpoint、Markdown 匯出、provider 診斷，以及 2,000 筆去重的記憶體 log 都會保留。
@@ -101,7 +104,7 @@ Windows portable 版不顯示 app 內更新控制，請自行到 [GitHub Release
 
 結構化 workflow 會先檢查所有必要角色。如果 provider 不可用，app 會指出是哪一家，讓你開啟／登入、重新指派角色或改選其他模式，不會偷偷替換 provider。一般結構化 workflow 遇到持續錯誤會停止；腦力激盪則暫停，等待你明確選擇重試、略過或取消。
 
-腦力激盪刻意設計成最重的預設：請讓四個預設 provider session 都保持登入，並預留約 **45 到 90 分鐘**。48 次發言的恢復路徑已有自動測試；v1.9.6 沒有新增真實帳號的 ChatGPT↔Grok 慢速接力檢查。
+腦力激盪刻意設計成最重的預設：請讓五個預設 provider session 都保持登入，並預留約 **45 到 90 分鐘**。48 次發言的恢復路徑已有自動測試；v1.9.6 沒有新增真實帳號的 ChatGPT↔Grok 慢速接力檢查。
 
 Workflow 完成後，可從底部 composer 繼續同一個 app conversation；要乾淨的 session context 時請選「**新增對話**」。
 
@@ -124,9 +127,10 @@ Workflow 完成後，可從底部 composer 繼續同一個 app conversation；�
 - **Windows x64** 有已驗證的 packaged launch 證據，但未簽章產物可能觸發 SmartScreen。
 - **macOS Apple Silicon** 僅部分驗證。DMG 為 ad-hoc 簽章且未 notarize；較早的實機回報能開啟 app 並登入 ChatGPT、Claude、Gemini，但 Grok 卡在 Cloudflare。現行 Grok 恢復流程仍需 Apple Silicon live retest；沒有 Intel 產物。
 - **Linux x86_64** 目前只有 CI packaging 驗證，沒有 maintainer 的新實機啟動報告。
-- v1.9.6 的變更只有自動測試覆蓋，尚未實機重測。沒有可用的 Chat/Work 帳號，也沒有實機錄到已登入的 Grok 頁面，所以下一次實機檢查是 Chat/Work 帳號自動送出一則提示，以及已登入的 Grok 窗格維持 Ready。已安裝的 app 自 2026-09-30 起，會透過 adapter 更新（啟動時，以及每六小時）取得 Grok 與 ChatGPT 的 adapter 更新，但 ChatGPT Chat/Work 的 engine 變更需要 v1.9.6。provider 的 engine 若靜默或卡住、而頁面始終沒有被換掉，這一步仍會等到 10 分鐘不活動窗口和 60 分鐘絕對上限。Meta 維持 `inputStrategy: "default"`。Meta 的停止、新對話重置與 profile 持久化仍未驗證，Grok Heavy 也沒有執行。先前的 Windows packaged launch 證據、較早的 Apple Silicon ChatGPT／Claude／Gemini 登入回報（Grok 卡在 Cloudflare），以及 Linux 僅 CI packaging，仍是目前紀錄。v1.9.6 沒有新的 Windows、macOS 或 Linux 啟動檢查。
+- v1.9.6 的變更只有自動測試覆蓋，尚未實機重測。沒有可用的 Chat/Work 帳號，也沒有實機錄到已登入的 Grok 頁面，所以下一次實機檢查是 Chat/Work 帳號自動送出一則提示，以及已登入的 Grok 窗格維持 Ready。已安裝的 app 自 2026-09-30 起，會透過 adapter 更新（啟動時，以及每六小時）取得 Grok 與 ChatGPT 的 adapter 更新，但 ChatGPT Chat/Work 的 engine 變更需要 v1.9.6。provider 的 engine 若靜默或卡住、而頁面始終沒有被換掉，這一步仍會等到 10 分鐘不活動窗口和 60 分鐘絕對上限。Meta 與 DeepSeek 維持 `inputStrategy: "default"`。Meta 的停止、新對話重置與 profile 持久化仍未驗證，Grok Heavy 也沒有執行。先前的 Windows packaged launch 證據、較早的 Apple Silicon ChatGPT／Claude／Gemini 登入回報（Grok 卡在 Cloudflare），以及 Linux 僅 CI packaging，仍是目前紀錄。v1.9.6 沒有新的 Windows、macOS 或 Linux 啟動檢查。
 - Meta AI 的訪客、Email／手機或 Facebook／Instagram 登入必須在 Meta 窗格內完成。在別的瀏覽器登入無法回到 app。
-- Snapshot／replay／checkpoint 只維護既有相容性。除了實驗性的 Meta AI 備用選項外，本功能凍結版本不規劃 marketplace、graph editor、更多 provider 擴充、新 persistence schema、內嵌 terminal agent、telemetry、Developer ID／notarization 計畫或 self-updater。
+- DeepSeek 的手機／Email、Google 或 Apple 登入必須在 DeepSeek 窗格內完成。在別的瀏覽器登入無法回到 app。DeepSeek selector 取自公開的 dscli-agent 預設值（dscli-agent 0.6.0），未登入的登入頁已於 2026-11-13 檢查過，但尚未在本 app 以登入 session 實際傳送／接收過。
+- Snapshot／replay／checkpoint 只維護既有相容性。除了 DeepSeek 預設 provider 與實驗性的 Meta AI 備用選項外，本功能凍結版本不規劃 marketplace、graph editor、更多 provider 擴充、新 persistence schema、內嵌 terminal agent、telemetry、Developer ID／notarization 計畫或 self-updater。
 
 證據詳見[相容性矩陣](./docs/COMPATIBILITY.md)。CI 與自動測試不會被包裝成「已用真實 provider 帳號或實機桌面驗證」。
 

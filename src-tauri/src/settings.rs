@@ -20,7 +20,7 @@ const RESIZER_WIDTH: f64 = 6.0;
 const SETTINGS_NORMALIZATION_CONTAINER_WIDTH: f64 = 1400.0;
 const DEFAULT_SNAPSHOT_REDACTION_TIER: &str = "metadata-only";
 const SNAPSHOT_REDACTION_TIERS: &[&str] = &["metadata-only", "hashes", "prompt-text", "full-local"];
-const PROVIDERS: &[&str] = &["chatgpt", "claude", "gemini", "grok", "meta"];
+const PROVIDERS: &[&str] = &["chatgpt", "claude", "deepseek", "gemini", "grok", "meta"];
 const DEFAULT_STANDBY_PROVIDER: &str = "meta";
 const PRESENTATION_STATES: &[&str] = &["chip", "side", "center"];
 
@@ -475,7 +475,7 @@ mod tests {
         std::fs::write(&path, b"{not-json").expect("write malformed settings");
 
         let settings = read_settings_for_provider_guard(&path);
-        for provider in ["chatgpt", "claude", "gemini", "grok"] {
+        for provider in ["chatgpt", "claude", "deepseek", "gemini", "grok"] {
             assert!(ensure_provider_active_value(&settings, provider).is_ok());
         }
         assert!(ensure_provider_active_value(&settings, "meta").is_err());
@@ -562,6 +562,7 @@ mod tests {
                 "presentation": {
                     "chatgpt": "side",
                     "claude": "side",
+                    "deepseek": "side",
                     "gemini": "side",
                     "grok": "side",
                     "meta": "chip"
@@ -590,6 +591,7 @@ mod tests {
                 "presentation": {
                     "chatgpt": "chip",
                     "claude": "center",
+                    "deepseek": "side",
                     "gemini": "side",
                     "grok": "side",
                     "meta": "chip"
@@ -619,6 +621,7 @@ mod tests {
                 "presentation": {
                     "chatgpt": "center",
                     "claude": "side",
+                    "deepseek": "side",
                     "gemini": "side",
                     "grok": "side",
                     "meta": "chip"
@@ -628,13 +631,13 @@ mod tests {
     }
 
     #[test]
-    fn normalizes_standby_provider_and_keeps_exactly_four_active() {
-        for standby in ["chatgpt", "claude", "gemini", "grok", "meta"] {
+    fn normalizes_standby_provider_and_keeps_exactly_five_active() {
+        for standby in ["chatgpt", "claude", "deepseek", "gemini", "grok", "meta"] {
             let normalized = normalize_settings_value(json!({ "standbyProvider": standby }));
             assert_eq!(normalized.get("standbyProvider"), Some(&json!(standby)));
 
             let active = active_providers_for_settings(&normalized);
-            assert_eq!(active.len(), 4);
+            assert_eq!(active.len(), 5);
             assert!(!active.contains(&standby));
         }
 
@@ -643,7 +646,7 @@ mod tests {
             assert_eq!(normalized.get("standbyProvider"), Some(&json!("meta")));
             assert_eq!(
                 active_providers_for_settings(&normalized),
-                vec!["chatgpt", "claude", "gemini", "grok"]
+                vec!["chatgpt", "claude", "deepseek", "gemini", "grok"]
             );
         }
     }
@@ -651,7 +654,7 @@ mod tests {
     #[test]
     fn standby_provider_is_denied_until_selected() {
         let default_settings = json!({});
-        for provider in ["chatgpt", "claude", "gemini", "grok"] {
+        for provider in ["chatgpt", "claude", "deepseek", "gemini", "grok"] {
             assert!(ensure_provider_active_value(&default_settings, provider).is_ok());
         }
         assert_eq!(

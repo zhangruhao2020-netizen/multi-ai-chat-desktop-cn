@@ -63,10 +63,10 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
 }
 
 describe('N5 webview presentation model', () => {
-  it('defaults the active four providers to side and Meta AI to standby chip presentation', () => {
+  it('defaults the active five providers to side and Meta AI to standby chip presentation', () => {
     const presentation = defaultPresentation();
 
-    expect(presentation).toEqual({ chatgpt: 'side', claude: 'side', gemini: 'side', grok: 'side', meta: 'chip' });
+    expect(presentation).toEqual({ chatgpt: 'side', claude: 'side', deepseek: 'side', gemini: 'side', grok: 'side', meta: 'chip' });
     expect(sideProviders(presentation, providers)).toEqual(providers);
     expect(chipProviders(presentation, providers)).toEqual([]);
     expect(centerPresentationProvider(presentation)).toBeUndefined();
@@ -92,7 +92,7 @@ describe('N5 webview presentation model', () => {
     let presentation = setProviderPresentation(defaultPresentation(), 'chatgpt', 'center');
     presentation = setProviderPresentation(presentation, 'claude', 'center');
 
-    expect(presentation).toEqual({ chatgpt: 'side', claude: 'center', gemini: 'side', grok: 'side', meta: 'chip' });
+    expect(presentation).toEqual({ chatgpt: 'side', claude: 'center', deepseek: 'side', gemini: 'side', grok: 'side', meta: 'chip' });
     expect(centerHiddenProviders(presentation, states({ grok: state('grok', 'none') }), new Set<AIProvider>(['gemini']), providers)).toEqual([
       'chatgpt',
     ]);
@@ -104,7 +104,7 @@ describe('N5 webview presentation model', () => {
       presentation: { chatgpt: 'chip', claude: 'center', gemini: 'bad', grok: 'side' },
     });
 
-    expect(normalized.presentation).toEqual({ chatgpt: 'chip', claude: 'center', gemini: 'side', grok: 'side', meta: 'chip' });
+    expect(normalized.presentation).toEqual({ chatgpt: 'chip', claude: 'center', deepseek: 'side', gemini: 'side', grok: 'side', meta: 'chip' });
     expect(restorableOpenProviders(normalized.openProviders, normalized.presentation)).toEqual(['claude', 'gemini']);
 
     const persisted = mergeSettings(normalized, {
@@ -117,6 +117,7 @@ describe('N5 webview presentation model', () => {
     const fallback: ReturnType<typeof defaultPresentation> = {
       chatgpt: 'chip',
       claude: 'center',
+      deepseek: 'chip',
       gemini: 'chip',
       grok: 'side',
       meta: 'chip',
@@ -125,6 +126,7 @@ describe('N5 webview presentation model', () => {
     expect(normalizePresentation({ chatgpt: 'bad', claude: 'side', gemini: 'bad', grok: 'bad' }, fallback)).toEqual({
       chatgpt: 'side',
       claude: 'side',
+      deepseek: 'chip',
       gemini: 'side',
       grok: 'side',
       meta: 'chip',

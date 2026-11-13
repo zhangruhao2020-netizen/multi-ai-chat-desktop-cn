@@ -1,0 +1,55 @@
+{
+  "$schema": "./schema.json",
+  "schemaVersion": 2,
+  "adapterVersion": 1,
+  "provider": "deepseek",
+  "displayName": "DeepSeek",
+  "urls": {
+    "app": "https://chat.deepseek.com",
+    "login": "https://chat.deepseek.com/sign_in",
+    "match": ["chat.deepseek.com/*"],
+    "ssoMatch": ["challenges.cloudflare.com/*"]
+  },
+  "inputSelectors": [
+    "textarea[placeholder=\"Message DeepSeek\"]",
+    "textarea[placeholder]",
+    "#root textarea",
+    "textarea"
+  ],
+  "sendButtonSelectors": [
+    "div[role=\"button\"].ds-button--primary.ds-button--circle",
+    "div[role=\"button\"].ds-button--primary"
+  ],
+  "responseSelectors": [
+    ".ds-markdown.ds-assistant-message-main-content",
+    ".ds-message .ds-markdown"
+  ],
+  "loginDetectors": [
+    "textarea[placeholder=\"Message DeepSeek\"]",
+    "textarea[placeholder]",
+    "#root textarea",
+    "div[role=\"button\"].ds-button--primary.ds-button--circle"
+  ],
+  "loggedOutDetectors": [
+    "input[type=\"password\"]",
+    {
+      "selector": "button",
+      "textIncludes": "Log in"
+    },
+    {
+      "selector": "a",
+      "textIncludes": "Sign up"
+    }
+  ],
+  "thinkingDetectors": [
+    "[aria-label*=\"stop\" i]",
+    "[data-testid*=\"stop\" i]"
+  ],
+  "stopButtonSelectors": [
+    "[aria-label*=\"stop\" i]",
+    "[data-testid*=\"stop\" i]"
+  ],
+  "inputStrategy": "default",
+  "sendStrategy": "click",
+  "timing": { "doneDelayMs": 5000, "chunkDebounceMs": 600, "statusIntervalMs": 10000, "backupPollMs": 3000 }
+}

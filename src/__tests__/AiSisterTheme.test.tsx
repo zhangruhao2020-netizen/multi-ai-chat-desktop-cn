@@ -35,4 +35,13 @@ describe('AI-Sister commemorative theme components', () => {
     expect(html).toContain('meta.webp');
     expect(html).not.toContain('data-avatar-fallback="true"');
   });
+
+  it('uses the supplied DeepSeek portrait for the default provider', () => {
+    const html = renderToStaticMarkup(<AiSisterAvatar provider="deepseek" size="md" />);
+
+    expect(html).toContain('data-provider="deepseek"');
+    expect(html).toContain('<img');
+    expect(html).toContain('deepseek.webp');
+    expect(html).not.toContain('data-avatar-fallback="true"');
+  });
 });

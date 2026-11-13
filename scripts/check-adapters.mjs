@@ -135,6 +135,43 @@ const expected = {
     thinkingDetectors: ['[data-testid="composer-stop-button"]', 'button[aria-label="Stop"]'],
     stopButtonSelectors: ['[data-testid="composer-stop-button"]', 'button[aria-label="Stop"]'],
   },
+  deepseek: {
+    schemaVersion: 2,
+    adapterVersion: 1,
+    urls: {
+      app: 'https://chat.deepseek.com',
+      login: 'https://chat.deepseek.com/sign_in',
+      match: ['chat.deepseek.com/*'],
+      ssoMatch: ['challenges.cloudflare.com/*'],
+    },
+    inputStrategy: 'default',
+    doneDelayMs: 5000,
+    chunkDebounceMs: 600,
+    inputSelectors: [
+      'textarea[placeholder="Message DeepSeek"]',
+      'textarea[placeholder]',
+      '#root textarea',
+      'textarea',
+    ],
+    sendButtonSelectors: [
+      'div[role="button"].ds-button--primary.ds-button--circle',
+      'div[role="button"].ds-button--primary',
+    ],
+    responseSelectors: ['.ds-markdown.ds-assistant-message-main-content', '.ds-message .ds-markdown'],
+    loginDetectors: [
+      'textarea[placeholder="Message DeepSeek"]',
+      'textarea[placeholder]',
+      '#root textarea',
+      'div[role="button"].ds-button--primary.ds-button--circle',
+    ],
+    loggedOutDetectors: [
+      'input[type="password"]',
+      { selector: 'button', textIncludes: 'Log in' },
+      { selector: 'a', textIncludes: 'Sign up' },
+    ],
+    thinkingDetectors: ['[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+    stopButtonSelectors: ['[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  },
 };
 
 const assertEqual = (actual, expectedValue, label) => {
@@ -217,6 +254,56 @@ assertEqual(
   metaAdapter.timing,
   { doneDelayMs: 5000, chunkDebounceMs: 600, statusIntervalMs: 10000, backupPollMs: 3000 },
   'meta.initialSeed.timing',
+);
+
+// DeepSeek web surface stays on chat.deepseek.com. Google/Apple sign-in hosts are
+// already in the host's shared IdP allowlist; only the Cloudflare challenge host
+// needs a bundled SSO entry so a human check stays in the DeepSeek pane.
+const deepseekAdapter = JSON.parse(await readFile(path.join(adapterDir, 'deepseek.json'), 'utf8'));
+assertEqual(deepseekAdapter.urls.match, ['chat.deepseek.com/*'], 'deepseek.initialSeed.appScopes');
+assertEqual(
+  deepseekAdapter.urls.ssoMatch,
+  ['challenges.cloudflare.com/*'],
+  'deepseek.initialSeed.ssoScopes',
+);
+assertEqual(
+  deepseekAdapter.inputSelectors,
+  [
+    'textarea[placeholder="Message DeepSeek"]',
+    'textarea[placeholder]',
+    '#root textarea',
+    'textarea',
+  ],
+  'deepseek.initialSeed.inputSelectors',
+);
+assertEqual(
+  deepseekAdapter.responseSelectors,
+  ['.ds-markdown.ds-assistant-message-main-content', '.ds-message .ds-markdown'],
+  'deepseek.initialSeed.responseSelectors',
+);
+assertEqual(
+  deepseekAdapter.loggedOutDetectors,
+  [
+    'input[type="password"]',
+    { selector: 'button', textIncludes: 'Log in' },
+    { selector: 'a', textIncludes: 'Sign up' },
+  ],
+  'deepseek.initialSeed.loggedOutDetectors',
+);
+assertEqual(
+  deepseekAdapter.thinkingDetectors,
+  ['[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  'deepseek.initialSeed.thinkingDetectors',
+);
+assertEqual(
+  deepseekAdapter.stopButtonSelectors,
+  ['[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  'deepseek.initialSeed.stopButtonSelectors',
+);
+assertEqual(
+  deepseekAdapter.timing,
+  { doneDelayMs: 5000, chunkDebounceMs: 600, statusIntervalMs: 10000, backupPollMs: 3000 },
+  'deepseek.initialSeed.timing',
 );
 
 console.log('Adapter schema and bundled seed checks passed.');

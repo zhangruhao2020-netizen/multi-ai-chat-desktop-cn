@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import chatgptAdapterSeed from '../../adapters/chatgpt.json';
 import claudeAdapterSeed from '../../adapters/claude.json';
+import deepseekAdapterSeed from '../../adapters/deepseek.json';
 import grokAdapterSeed from '../../adapters/grok.json';
 import type { AIProvider, BridgeMessage } from '../../shared/types';
 
@@ -789,6 +790,106 @@ describe('injected engine input hardening', () => {
     expect(env.sendButton?.clickCount).toBe(0);
     expect(keyEventCount(input)).toBe(0);
     expect(errorDone(env)?.payload).toBe('[Error: meta input disappeared before send]');
+  });
+
+  it('reports DeepSeek logged out on its sign-in page', async () => {
+    const env = createEnv({ inputKind: 'textarea' });
+    const password = new FakeElement(env.document, 'input');
+    password.setAttribute('type', 'password');
+    env.detectorElements.set('input[type="password"]', [password]);
+    const handler = await installEngine(env);
+
+    dispatchAdapter(handler, bundledDeepseekAdapter());
+
+    expect(env.emitted.at(-1)).toEqual({
+      v: 1,
+      action: 'STATUS_REPORT',
+      provider: 'deepseek',
+      payload: { dom: 'ready', login: 'logged_out', thinking: false, bootId: 'boot1' },
+    });
+  });
+
+  it('reports DeepSeek logged in for a usable textarea composer and sends through it', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'textarea' });
+    const textarea = env.input as FakeTextAreaElement;
+    textarea.setAttribute('placeholder', 'Message DeepSeek');
+    env.detectorElements.set('textarea[placeholder="Message DeepSeek"]', [textarea]);
+    env.detectorElements.set(
+      'div[role="button"].ds-button--primary.ds-button--circle',
+      env.sendButton ? [env.sendButton] : [],
+    );
+    const prompt = '請用 DeepSeek 比較 **A** 與 `B`。';
+    const inputEventValues: string[] = [];
+    textarea.onDispatch = (event) => {
+      if (event.type === 'input') inputEventValues.push(textarea.value);
+    };
+    let submitted = '';
+    if (env.sendButton) {
+      env.sendButton.onClick = () => {
+        submitted = textarea.value;
+        textarea.setVisibleText('');
+      };
+    }
+    const handler = await installEngine(env);
+    dispatchAdapter(handler, bundledDeepseekAdapter());
+
+    expect(env.emitted.at(-1)).toEqual({
+      v: 1,
+      action: 'STATUS_REPORT',
+      provider: 'deepseek',
+      payload: { dom: 'ready', login: 'logged_in', thinking: false, bootId: 'boot1' },
+    });
+
+    send(handler, prompt, 'deepseek');
+    await flushMicrotasks();
+
+    expect(textarea.value).toBe(prompt);
+    expect(inputEventValues).toEqual([prompt]);
+
+    await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
+
+    expect(submitted).toBe(prompt);
+    expect(env.sendButton?.clickCount).toBe(1);
+    expect(errorDone(env)).toBeUndefined();
+  });
+
+  it('skips a disabled DeepSeek textarea for the usable composer', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'textarea' });
+    const textarea = env.input as FakeTextAreaElement;
+    textarea.setAttribute('placeholder', 'Message DeepSeek');
+    const gated = new FakeTextAreaElement(env.document, 'textarea');
+    gated.setAttribute('placeholder', 'Message DeepSeek');
+    gated.disabled = true;
+    gated.setAttribute('disabled', '');
+    env.detectorElements.set('textarea[placeholder="Message DeepSeek"]', [gated, textarea]);
+    env.detectorElements.set(
+      'div[role="button"].ds-button--primary.ds-button--circle',
+      env.sendButton ? [env.sendButton] : [],
+    );
+    const prompt = 'use the usable DeepSeek composer';
+    let submitted = '';
+    if (env.sendButton) {
+      env.sendButton.onClick = () => {
+        submitted = textarea.value;
+        textarea.setVisibleText('');
+      };
+    }
+    const handler = await installEngine(env);
+    dispatchAdapter(handler, bundledDeepseekAdapter());
+
+    send(handler, prompt, 'deepseek');
+    await flushMicrotasks();
+
+    expect(gated.value).toBe('');
+    expect(textarea.value).toBe(prompt);
+
+    await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
+
+    expect(submitted).toBe(prompt);
+    expect(env.sendButton?.clickCount).toBe(1);
+    expect(errorDone(env)).toBeUndefined();
   });
 
   it('clicks Meta AI stop when the host stops the provider', async () => {
@@ -4245,6 +4346,24 @@ function bundledGrokAdapter(): Partial<TestAdapter> {
     inputStrategy: 'prosemirror-paste',
     sendStrategy: 'click',
     timing: grokAdapterSeed.timing,
+  };
+}
+
+function bundledDeepseekAdapter(overrides: Partial<TestAdapter> = {}): Partial<TestAdapter> {
+  return {
+    provider: 'deepseek',
+    adapterVersion: deepseekAdapterSeed.adapterVersion,
+    inputSelectors: [...deepseekAdapterSeed.inputSelectors],
+    sendButtonSelectors: [...deepseekAdapterSeed.sendButtonSelectors],
+    responseSelectors: [...deepseekAdapterSeed.responseSelectors],
+    loginDetectors: [...deepseekAdapterSeed.loginDetectors],
+    loggedOutDetectors: [...deepseekAdapterSeed.loggedOutDetectors],
+    thinkingDetectors: [...deepseekAdapterSeed.thinkingDetectors],
+    stopButtonSelectors: [...deepseekAdapterSeed.stopButtonSelectors],
+    inputStrategy: 'default',
+    sendStrategy: 'click',
+    timing: deepseekAdapterSeed.timing,
+    ...overrides,
   };
 }
 

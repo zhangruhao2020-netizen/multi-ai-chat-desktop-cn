@@ -98,6 +98,7 @@ export const I18N_KEYS = [
   'provider.clickToRecover',
   'provider.login',
   'provider.metaLoginGuidance',
+  'provider.deepseekLoginGuidance',
   'provider.moreActions',
   'provider.reload',
   'provider.report',

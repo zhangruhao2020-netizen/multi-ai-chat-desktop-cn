@@ -11,7 +11,7 @@ import {
 } from '../ui/settingsModel';
 
 describe('optional standby provider', () => {
-  it('keeps the original four providers active and Meta AI on standby by default', () => {
+  it('keeps the five default providers active and Meta AI on standby by default', () => {
     const settings = defaultSettings();
 
     expect(settings.standbyProvider).toBe(DEFAULT_STANDBY_PROVIDER);
@@ -40,6 +40,7 @@ describe('optional standby provider', () => {
     expect(activeProvidersForStandby(settings.standbyProvider)).toEqual([
       'chatgpt',
       'claude',
+      'deepseek',
       'gemini',
       'meta',
     ]);

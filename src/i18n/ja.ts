@@ -117,6 +117,7 @@ export const ja: Record<I18nKey, string> = {
   'provider.clickToRecover': 'クリックで再読み込みして接続を回復',
   'provider.login': 'ログイン',
   'provider.metaLoginGuidance': 'ゲスト、メール／携帯、またはFacebook／Instagramのログインはこのウィンドウで完了してください。別のブラウザでログインしてもここに戻れません。',
+  'provider.deepseekLoginGuidance': '電話番号／メール、Google、またはAppleのログインはこのウィンドウで完了してください。別のブラウザでログインしてもここに戻れません。',
   'provider.moreActions': 'プロバイダーのその他の操作',
   'provider.reload': '再読み込み',
   'provider.report': '報告',

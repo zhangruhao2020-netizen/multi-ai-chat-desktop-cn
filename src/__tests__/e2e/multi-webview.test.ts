@@ -43,6 +43,7 @@ describe('multi-webview e2e', () => {
     const states = {
       chatgpt: { provider: 'chatgpt', webview: 'loaded', dom: 'ready', login: 'logged_in', thinking: false, lastStatusAt: 1, bridge: 'ok' },
       claude: { provider: 'claude', webview: 'loaded', dom: 'ready', login: 'logged_in', thinking: false, lastStatusAt: 1, bridge: 'ok' },
+      deepseek: { provider: 'deepseek', webview: 'loaded', dom: 'ready', login: 'logged_in', thinking: false, lastStatusAt: 1, bridge: 'ok' },
       gemini: { provider: 'gemini', webview: 'loaded', dom: 'ready', login: 'logged_in', thinking: false, lastStatusAt: 1, bridge: 'ok' },
       grok: { provider: 'grok', webview: 'loaded', dom: 'ready', login: 'logged_in', thinking: false, lastStatusAt: 1, bridge: 'ok' },
     } as unknown as Record<string, ProviderState>;
