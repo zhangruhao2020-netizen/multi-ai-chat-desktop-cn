@@ -10,7 +10,7 @@ Import `host` from `./host`. Implementations and signatures live in [`src/host/i
 | --- | --- |
 | `host.provider.send(provider, text)` | `Promise<void>`; dispatches `SEND_MESSAGE`. Resolution confirms dispatch, not provider acceptance or response completion. Normal app sends go through `runWorkflow`. |
 | `host.provider.stop(provider)` | `Promise<void>`; attempts the provider stop control. This alone does not cancel workflow waiters. |
-| `host.connections.get()` | `Promise<ProviderState[]>`; returns all five providers, including the standby. |
+| `host.connections.get()` | `Promise<ProviderState[]>`; returns all six providers, including the standby. |
 | `host.bridge.subscribe(handler)` / `host.bridge.onMessage(handler)` | `Promise<() => void>`; subscribes to the control-pane bus and returns cleanup. |
 | `host.bridge.subscribeTitle(handler)` | `Promise<() => void>`; subscribes to native title events. Used by the pull bridge; title hints cannot complete a workflow step. |
 
@@ -40,7 +40,7 @@ Every `BridgeMessage` includes `v: 1` and a supported `action`. `payload` is `un
 
 [`runWorkflow(params: RunWorkflowParams): Promise<RunWorkflowResult>`](../src/workflow/index.ts) runs the graph for `mode`. Brainstorm uses `presetId: 'brainstorm'`, not a sixth `ChatMode`.
 
-The active lineup always contains exactly five providers. Use `targets` for a smaller Free-mode selection and derive `activeProviders` from the current standby setting.
+The active lineup always contains exactly six providers. Use `targets` for a smaller Free-mode selection and derive `activeProviders` from the current standby setting.
 
 ```typescript
 import { host } from './host';

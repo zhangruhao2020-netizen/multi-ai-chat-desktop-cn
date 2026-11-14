@@ -131,6 +131,14 @@ const defaultStates: Record<AIProvider, ProviderState> = {
     thinking: false,
     lastStatusAt: 1,
   },
+  doubao: {
+    provider: 'doubao',
+    webview: 'none',
+    dom: 'unknown',
+    login: 'unknown',
+    thinking: false,
+    lastStatusAt: 1,
+  },
   gemini: {
     provider: 'gemini',
     webview: 'none',

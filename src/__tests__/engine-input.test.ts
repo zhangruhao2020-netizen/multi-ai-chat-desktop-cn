@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import chatgptAdapterSeed from '../../adapters/chatgpt.json';
 import claudeAdapterSeed from '../../adapters/claude.json';
 import deepseekAdapterSeed from '../../adapters/deepseek.json';
+import doubaoAdapterSeed from '../../adapters/doubao.json';
 import grokAdapterSeed from '../../adapters/grok.json';
 import type { AIProvider, BridgeMessage } from '../../shared/types';
 
@@ -884,6 +885,73 @@ describe('injected engine input hardening', () => {
 
     expect(gated.value).toBe('');
     expect(textarea.value).toBe(prompt);
+
+    await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
+
+    expect(submitted).toBe(prompt);
+    expect(env.sendButton?.clickCount).toBe(1);
+    expect(errorDone(env)).toBeUndefined();
+  });
+
+  it('reports Doubao logged out on its region-ban page', async () => {
+    const env = createEnv({ inputKind: 'textarea' });
+    env.detectorElements.set('button', [new FakeElement(env.document, 'button', '登录')]);
+    const ban = new FakeElement(env.document, 'div', '受区域限制，请先登录再使用豆包。');
+    env.document.body.appendChild(ban);
+    const handler = await installEngine(env);
+
+    dispatchAdapter(handler, bundledDoubaoAdapter());
+
+    expect(doubaoAdapterSeed.loggedOutDetectors).toEqual([
+      { selector: 'button', textIncludes: '登录' },
+      { selector: 'button', textIncludes: 'Log In' },
+      { selector: 'body', textIncludes: '受区域限制' },
+    ]);
+    expect(env.emitted.at(-1)).toEqual({
+      v: 1,
+      action: 'STATUS_REPORT',
+      provider: 'doubao',
+      payload: { dom: 'ready', login: 'logged_out', thinking: false, bootId: 'boot1' },
+    });
+  });
+
+  it('reports Doubao logged in for a usable textarea composer and sends through it', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'textarea' });
+    const textarea = env.input as FakeTextAreaElement;
+    textarea.setAttribute('placeholder', '有什么我能帮你的吗？');
+    env.detectorElements.set('textarea[placeholder="有什么我能帮你的吗？"]', [textarea]);
+    env.detectorElements.set(
+      'button[aria-label="发送"]',
+      env.sendButton ? [env.sendButton] : [],
+    );
+    const prompt = '请用豆包比较 **A** 与 `B`。';
+    const inputEventValues: string[] = [];
+    textarea.onDispatch = (event) => {
+      if (event.type === 'input') inputEventValues.push(textarea.value);
+    };
+    let submitted = '';
+    if (env.sendButton) {
+      env.sendButton.onClick = () => {
+        submitted = textarea.value;
+        textarea.setVisibleText('');
+      };
+    }
+    const handler = await installEngine(env);
+    dispatchAdapter(handler, bundledDoubaoAdapter());
+
+    expect(env.emitted.at(-1)).toEqual({
+      v: 1,
+      action: 'STATUS_REPORT',
+      provider: 'doubao',
+      payload: { dom: 'ready', login: 'logged_in', thinking: false, bootId: 'boot1' },
+    });
+
+    send(handler, prompt, 'doubao');
+    await flushMicrotasks();
+
+    expect(textarea.value).toBe(prompt);
+    expect(inputEventValues).toEqual([prompt]);
 
     await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
 
@@ -4363,6 +4431,24 @@ function bundledDeepseekAdapter(overrides: Partial<TestAdapter> = {}): Partial<T
     inputStrategy: 'default',
     sendStrategy: 'click',
     timing: deepseekAdapterSeed.timing,
+    ...overrides,
+  };
+}
+
+function bundledDoubaoAdapter(overrides: Partial<TestAdapter> = {}): Partial<TestAdapter> {
+  return {
+    provider: 'doubao',
+    adapterVersion: doubaoAdapterSeed.adapterVersion,
+    inputSelectors: [...doubaoAdapterSeed.inputSelectors],
+    sendButtonSelectors: [...doubaoAdapterSeed.sendButtonSelectors],
+    responseSelectors: [...doubaoAdapterSeed.responseSelectors],
+    loginDetectors: [...doubaoAdapterSeed.loginDetectors],
+    loggedOutDetectors: [...doubaoAdapterSeed.loggedOutDetectors],
+    thinkingDetectors: [...doubaoAdapterSeed.thinkingDetectors],
+    stopButtonSelectors: [...doubaoAdapterSeed.stopButtonSelectors],
+    inputStrategy: 'default',
+    sendStrategy: 'click',
+    timing: doubaoAdapterSeed.timing,
     ...overrides,
   };
 }

@@ -106,6 +106,7 @@ export const zhTW: Record<I18nKey, string> = {
   'provider.login': '登入',
   'provider.metaLoginGuidance': '訪客、Email／手機或 Facebook／Instagram 登入請在這個視窗完成。在別的瀏覽器登入無法回到 app。',
   'provider.deepseekLoginGuidance': '手機／Email、Google 或 Apple 登入請在這個視窗完成。在別的瀏覽器登入無法回到 app。',
+  'provider.doubaoLoginGuidance': '手機、抖音或 Apple 登入請在這個視窗完成。在別的瀏覽器登入無法回到 app。',
   'provider.moreActions': '更多 provider 操作',
   'provider.reload': '重新載入',
   'provider.report': '回報',

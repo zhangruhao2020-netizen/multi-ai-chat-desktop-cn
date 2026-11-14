@@ -5,7 +5,7 @@ import type { AIProvider, ChatMode, DebateRoles, ConsultRoles, CodingRoles, Roun
 
 // === AI Provider Info ===
 
-export const ALL_AI_PROVIDERS = ['chatgpt', 'claude', 'deepseek', 'gemini', 'grok', 'meta'] as const satisfies readonly AIProvider[];
+export const ALL_AI_PROVIDERS = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok', 'meta'] as const satisfies readonly AIProvider[];
 
 export const AI_PROVIDERS: Record<AIProvider, {
   name: string;
@@ -31,6 +31,12 @@ export const AI_PROVIDERS: Record<AIProvider, {
     loginUrl: 'https://chat.deepseek.com/sign_in',
     color: '#4d6bfe',
   },
+  doubao: {
+    name: 'Doubao',
+    url: 'https://www.doubao.com/chat',
+    loginUrl: 'https://www.doubao.com/chat',
+    color: '#2e6bff',
+  },
   gemini: {
     name: 'Gemini',
     url: 'https://gemini.google.com',
@@ -52,7 +58,7 @@ export const AI_PROVIDERS: Record<AIProvider, {
 };
 
 export const DOCK_SLOT_PROVIDERS = ['chatgpt', 'claude', 'gemini', 'grok'] as const satisfies readonly AIProvider[];
-export const DEFAULT_FREE_TARGET_PROVIDERS = ['chatgpt', 'claude', 'deepseek', 'gemini', 'grok'] as const satisfies readonly AIProvider[];
+export const DEFAULT_FREE_TARGET_PROVIDERS = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'] as const satisfies readonly AIProvider[];
 export const DEFAULT_STANDBY_PROVIDER: AIProvider = 'meta';
 
 // === Mode Definitions ===

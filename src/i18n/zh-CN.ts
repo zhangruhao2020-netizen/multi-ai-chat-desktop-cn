@@ -106,6 +106,7 @@ export const zhCN: Record<I18nKey, string> = {
   'provider.login': '登录',
   'provider.metaLoginGuidance': '访客、邮箱/手机或 Facebook/Instagram 登录请在这个窗口完成。在其他浏览器登录无法回到本应用。',
   'provider.deepseekLoginGuidance': '手机/邮箱、Google 或 Apple 登录请在这个窗口完成。在其他浏览器登录无法回到本应用。',
+  'provider.doubaoLoginGuidance': '手机、抖音或 Apple 登录请在这个窗口完成。在其他浏览器登录无法回到本应用。',
   'provider.moreActions': '更多 provider 操作',
   'provider.reload': '重新加载',
   'provider.report': '回报',

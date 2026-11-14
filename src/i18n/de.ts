@@ -118,6 +118,7 @@ export const de: Record<I18nKey, string> = {
   'provider.login': 'Anmelden',
   'provider.metaLoginGuidance': 'Gast, E-Mail/Mobil oder Facebook/Instagram-Anmeldung in diesem Fenster abschließen. Eine Anmeldung in einem anderen Browser kehrt nicht hierher zurück.',
   'provider.deepseekLoginGuidance': 'Telefon/E-Mail-, Google- oder Apple-Anmeldung in diesem Fenster abschließen. Eine Anmeldung in einem anderen Browser kehrt nicht hierher zurück.',
+  'provider.doubaoLoginGuidance': 'Telefon-, Douyin- oder Apple-Anmeldung in diesem Fenster abschließen. Eine Anmeldung in einem anderen Browser kehrt nicht hierher zurück.',
   'provider.moreActions': 'Weitere Anbieteraktionen',
   'provider.reload': 'Neu laden',
   'provider.report': 'Melden',

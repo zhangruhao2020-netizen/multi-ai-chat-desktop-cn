@@ -172,6 +172,38 @@ const expected = {
     thinkingDetectors: ['[aria-label*="stop" i]', '[data-testid*="stop" i]'],
     stopButtonSelectors: ['[aria-label*="stop" i]', '[data-testid*="stop" i]'],
   },
+  doubao: {
+    schemaVersion: 2,
+    adapterVersion: 1,
+    urls: {
+      app: 'https://www.doubao.com/chat',
+      login: 'https://www.doubao.com/chat',
+      match: ['www.doubao.com/*', 'doubao.com/*'],
+    },
+    inputStrategy: 'default',
+    doneDelayMs: 5000,
+    chunkDebounceMs: 600,
+    inputSelectors: [
+      'textarea[placeholder="有什么我能帮你的吗？"]',
+      'textarea[placeholder]',
+      'textarea',
+    ],
+    sendButtonSelectors: ['button[aria-label="发送"]', 'button[aria-label="Send"]', 'button[type="submit"]'],
+    responseSelectors: ['[data-testid="assistant-message"]', '.message-bubble.assistant', '[class*="markdown"]'],
+    loginDetectors: [
+      'textarea[placeholder="有什么我能帮你的吗？"]',
+      'textarea[placeholder]',
+      'textarea',
+      'button[aria-label="发送"]',
+    ],
+    loggedOutDetectors: [
+      { selector: 'button', textIncludes: '登录' },
+      { selector: 'button', textIncludes: 'Log In' },
+      { selector: 'body', textIncludes: '受区域限制' },
+    ],
+    thinkingDetectors: ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+    stopButtonSelectors: ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  },
 };
 
 const assertEqual = (actual, expectedValue, label) => {
@@ -304,6 +336,54 @@ assertEqual(
   deepseekAdapter.timing,
   { doneDelayMs: 5000, chunkDebounceMs: 600, statusIntervalMs: 10000, backupPollMs: 3000 },
   'deepseek.initialSeed.timing',
+);
+
+// Doubao web surface stays on www.doubao.com/chat; login is a modal on the
+// chat page, so login is the app URL and no SSO host was observed to bundle.
+// The logged-out region-ban page (observed 2026-11-14 from outside mainland
+// China) is what the loggedOutDetectors recognize; the composer placeholder
+// is the one public write-ups quote, and the send/response selectors are
+// generic fallbacks, none of them verified against a signed-in session.
+const doubaoAdapter = JSON.parse(await readFile(path.join(adapterDir, 'doubao.json'), 'utf8'));
+assertEqual(doubaoAdapter.urls.match, ['www.doubao.com/*', 'doubao.com/*'], 'doubao.initialSeed.appScopes');
+assertEqual(doubaoAdapter.urls.ssoMatch, undefined, 'doubao.initialSeed.ssoScopes');
+assertEqual(
+  doubaoAdapter.inputSelectors,
+  [
+    'textarea[placeholder="有什么我能帮你的吗？"]',
+    'textarea[placeholder]',
+    'textarea',
+  ],
+  'doubao.initialSeed.inputSelectors',
+);
+assertEqual(
+  doubaoAdapter.responseSelectors,
+  ['[data-testid="assistant-message"]', '.message-bubble.assistant', '[class*="markdown"]'],
+  'doubao.initialSeed.responseSelectors',
+);
+assertEqual(
+  doubaoAdapter.loggedOutDetectors,
+  [
+    { selector: 'button', textIncludes: '登录' },
+    { selector: 'button', textIncludes: 'Log In' },
+    { selector: 'body', textIncludes: '受区域限制' },
+  ],
+  'doubao.initialSeed.loggedOutDetectors',
+);
+assertEqual(
+  doubaoAdapter.thinkingDetectors,
+  ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  'doubao.initialSeed.thinkingDetectors',
+);
+assertEqual(
+  doubaoAdapter.stopButtonSelectors,
+  ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  'doubao.initialSeed.stopButtonSelectors',
+);
+assertEqual(
+  doubaoAdapter.timing,
+  { doneDelayMs: 5000, chunkDebounceMs: 600, statusIntervalMs: 10000, backupPollMs: 3000 },
+  'doubao.initialSeed.timing',
 );
 
 console.log('Adapter schema and bundled seed checks passed.');

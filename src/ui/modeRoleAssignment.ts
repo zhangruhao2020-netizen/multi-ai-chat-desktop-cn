@@ -136,7 +136,7 @@ export function assignModeRole(
 
 /**
  * Swap a provider out of every persisted collaboration seat. This is used
- * when the five-active-provider lineup changes: the previous standby takes
+ * when the six-active-provider lineup changes: the previous standby takes
  * the exact seats that belonged to the newly selected standby provider.
  */
 export function replaceModeRoleProvider(

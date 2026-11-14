@@ -6,4 +6,6 @@ The optional Meta AI portrait (`meta.webp`) is copied byte-for-byte from the pri
 
 The DeepSeek tile (`deepseek.webp`) is not owner-supplied character artwork: it is a locally generated monogram tile in the DeepSeek brand blue, added so the DeepSeek provider has an identity portrait in the theme.
 
+The Doubao tile (`doubao.webp`) is not owner-supplied character artwork: it is a locally generated monogram tile in the Doubao brand blue, added so the Doubao provider has an identity portrait in the theme.
+
 Artwork: AI-Sister.com / Ted Huang. Included and redistributed with permission for this project. The character artwork is not offered for independent reuse under the software's MIT License unless the rights holder grants separate permission.

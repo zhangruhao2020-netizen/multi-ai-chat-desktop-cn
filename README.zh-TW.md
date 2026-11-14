@@ -2,7 +2,7 @@
 
 [English](./README.md) · **繁體中文** · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [Deutsch](./README.de.md)
 
-只問一次，讓五個已登入的 AI 網頁 session 互相回答、審查、質疑，再一起收斂結果。**ChatGPT、Claude、DeepSeek、Gemini、Grok 是預設陣容；Meta AI 是 Settings 裡實驗性的備用選項。** Multi-AI Chat Desktop 是以 Tauri 2 打造的多 AI workflow 中樞，不只是把五個聊天視窗並排。
+只問一次，讓六個已登入的 AI 網頁 session 互相回答、審查、質疑，再一起收斂結果。**ChatGPT、Claude、DeepSeek、豆包、Gemini、Grok 是預設陣容；Meta AI 是 Settings 裡實驗性的備用選項。** Multi-AI Chat Desktop 是以 Tauri 2 打造的多 AI workflow 中樞，不只是把六個聊天視窗並排。
 
 [**前往官方網站 →**](https://ted-h-com.github.io/multi-ai-chat-desktop/?lang=zh-TW) · [下載 v1.9.8](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.8) · [所有版本](https://github.com/TED-H-com/multi-ai-chat-desktop/releases) · MIT · 不需 API Key · 無分析追蹤
 
@@ -25,6 +25,7 @@
 使用實驗性的 Meta AI 時，請在 **Meta 窗格內** 完成訪客、Email／手機或 Facebook／Instagram 登入。在別的瀏覽器登入無法回到 app 的隔離 profile。
 
 使用 DeepSeek 時，請在 **DeepSeek 窗格內** 完成手機／Email、Google 或 Apple 登入。在別的瀏覽器登入無法回到 app 的隔離 profile。
+使用豆包時，請在 **豆包窗格內** 完成手機、抖音或 Apple 登入。在別的瀏覽器登入無法回到 app 的隔離 profile。在中國大陸以外，豆包在登入前會顯示區域限制。
 
 ### macOS 第一次啟動
 
@@ -59,9 +60,10 @@ Windows portable 版不顯示 app 內更新控制，請自行到 [GitHub Release
 - **Meta 登入會被認得。** 可見、可編輯的輸入框會標成已登入，即使頁面上還留著登入按鈕或 inert 欄位。
 - **Meta 登入留在窗格內。** Facebook／Instagram 登入在 app 內完成。在別的瀏覽器登入無法回到隔離的 Meta profile。
 - **Grok Heavy 恢復生成的計時器。** 若 Grok 恢復 stop 控制並繼續生成、但中間答案文字沒變，會取消過期的靜默計時器，再等生成真正結束。
-- **可選的 Meta AI 備用。** 六家可選、同時只啟用五家。原本五家仍是預設；Settings 可替換其中一家。Profile 會保留，角色與 targets 會修到目前陣容。
+- **可選的 Meta AI 備用。** 七家可選、同時只啟用六家。原本六家仍是預設；Settings 可替換其中一家。Profile 會保留，角色與 targets 會修到目前陣容。
 - **DeepSeek 加入預設陣容。** DeepSeek 網頁版（chat.deepseek.com）是預設 provider。其輸入框、傳送按鈕與助手訊息 selector 沿用公開的 dscli-agent 預設值，尚未在本 app 以登入 session 驗證過。
-- **Portrait 與診斷。** Meta AI 與 DeepSeek 各有獨立 portrait。Event log 與 debug bundle 會標出它們，不儲存 prompt 或回覆。
+- **豆包加入預設陣容。** 豆包網頁版（www.doubao.com/chat）是預設 provider。因中國大陸以外有區域限制，未登入頁面未能實際檢查，其輸入框提示語取自公開資料，傳送按鈕與助手訊息 selector 為通用 fallback，尚未在本 app 以登入 session 驗證過。
+- **Portrait 與診斷。** Meta AI、DeepSeek 與豆包各有獨立 portrait。Event log 與 debug bundle 會標出它們，不儲存 prompt 或回覆。
 
 完整內容請見[發布說明](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.6)。
 
@@ -127,10 +129,11 @@ Workflow 完成後，可從底部 composer 繼續同一個 app conversation；�
 - **Windows x64** 有已驗證的 packaged launch 證據，但未簽章產物可能觸發 SmartScreen。
 - **macOS Apple Silicon** 僅部分驗證。DMG 為 ad-hoc 簽章且未 notarize；較早的實機回報能開啟 app 並登入 ChatGPT、Claude、Gemini，但 Grok 卡在 Cloudflare。現行 Grok 恢復流程仍需 Apple Silicon live retest；沒有 Intel 產物。
 - **Linux x86_64** 目前只有 CI packaging 驗證，沒有 maintainer 的新實機啟動報告。
-- v1.9.6 的變更只有自動測試覆蓋，尚未實機重測。沒有可用的 Chat/Work 帳號，也沒有實機錄到已登入的 Grok 頁面，所以下一次實機檢查是 Chat/Work 帳號自動送出一則提示，以及已登入的 Grok 窗格維持 Ready。已安裝的 app 自 2026-09-30 起，會透過 adapter 更新（啟動時，以及每六小時）取得 Grok 與 ChatGPT 的 adapter 更新，但 ChatGPT Chat/Work 的 engine 變更需要 v1.9.6。provider 的 engine 若靜默或卡住、而頁面始終沒有被換掉，這一步仍會等到 10 分鐘不活動窗口和 60 分鐘絕對上限。Meta 與 DeepSeek 維持 `inputStrategy: "default"`。Meta 的停止、新對話重置與 profile 持久化仍未驗證，Grok Heavy 也沒有執行。先前的 Windows packaged launch 證據、較早的 Apple Silicon ChatGPT／Claude／Gemini 登入回報（Grok 卡在 Cloudflare），以及 Linux 僅 CI packaging，仍是目前紀錄。v1.9.6 沒有新的 Windows、macOS 或 Linux 啟動檢查。
+- v1.9.6 的變更只有自動測試覆蓋，尚未實機重測。沒有可用的 Chat/Work 帳號，也沒有實機錄到已登入的 Grok 頁面，所以下一次實機檢查是 Chat/Work 帳號自動送出一則提示，以及已登入的 Grok 窗格維持 Ready。已安裝的 app 自 2026-09-30 起，會透過 adapter 更新（啟動時，以及每六小時）取得 Grok 與 ChatGPT 的 adapter 更新，但 ChatGPT Chat/Work 的 engine 變更需要 v1.9.6。provider 的 engine 若靜默或卡住、而頁面始終沒有被換掉，這一步仍會等到 10 分鐘不活動窗口和 60 分鐘絕對上限。Meta、DeepSeek 與豆包維持 `inputStrategy: "default"`。Meta 的停止、新對話重置與 profile 持久化仍未驗證，Grok Heavy 也沒有執行。先前的 Windows packaged launch 證據、較早的 Apple Silicon ChatGPT／Claude／Gemini 登入回報（Grok 卡在 Cloudflare），以及 Linux 僅 CI packaging，仍是目前紀錄。v1.9.6 沒有新的 Windows、macOS 或 Linux 啟動檢查。
 - Meta AI 的訪客、Email／手機或 Facebook／Instagram 登入必須在 Meta 窗格內完成。在別的瀏覽器登入無法回到 app。
 - DeepSeek 的手機／Email、Google 或 Apple 登入必須在 DeepSeek 窗格內完成。在別的瀏覽器登入無法回到 app。DeepSeek selector 取自公開的 dscli-agent 預設值（dscli-agent 0.6.0），未登入的登入頁已於 2026-11-13 檢查過，但尚未在本 app 以登入 session 實際傳送／接收過。
-- Snapshot／replay／checkpoint 只維護既有相容性。除了 DeepSeek 預設 provider 與實驗性的 Meta AI 備用選項外，本功能凍結版本不規劃 marketplace、graph editor、更多 provider 擴充、新 persistence schema、內嵌 terminal agent、telemetry、Developer ID／notarization 計畫或 self-updater。
+- 豆包的手機、抖音或 Apple 登入必須在豆包窗格內完成。在別的瀏覽器登入無法回到 app。豆包 selector 是圍繞公開輸入框提示語搭建的通用 fallback，未登入頁面因區域限制於 2026-11-14 未能檢查，尚未在本 app 以登入 session 實際傳送／接收過。
+- Snapshot／replay／checkpoint 只維護既有相容性。除了 DeepSeek 與豆包預設 provider、實驗性的 Meta AI 備用選項外，本功能凍結版本不規劃 marketplace、graph editor、更多 provider 擴充、新 persistence schema、內嵌 terminal agent、telemetry、Developer ID／notarization 計畫或 self-updater。
 
 證據詳見[相容性矩陣](./docs/COMPATIBILITY.md)。CI 與自動測試不會被包裝成「已用真實 provider 帳號或實機桌面驗證」。
 

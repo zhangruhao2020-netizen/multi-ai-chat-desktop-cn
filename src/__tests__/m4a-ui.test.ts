@@ -36,7 +36,7 @@ import {
   type StepTimeoutEvent,
 } from '../workflow/stepTimeout';
 
-const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'gemini', 'grok'];
+const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'];
 
 function state(provider: AIProvider, sendable = true): ProviderState {
   return {
@@ -153,15 +153,15 @@ describe('M4a UI helpers', () => {
     expect(model.aliased).toEqual([{ provider: 'chatgpt', label: 'ChatGPT', reason: t('preflight.aliasedProvider', 'en') }]);
   });
 
-  it('defaults free targets to five shipped sendable providers and toggles the selected send list', () => {
+  it('defaults free targets to six shipped sendable providers and toggles the selected send list', () => {
     const snapshot = states({ claude: state('claude', false) });
-    expect(defaultTargets(snapshot, [...DEFAULT_FREE_TARGET_PROVIDERS])).toEqual(['chatgpt', 'deepseek', 'gemini', 'grok']);
+    expect(defaultTargets(snapshot, [...DEFAULT_FREE_TARGET_PROVIDERS])).toEqual(['chatgpt', 'deepseek', 'doubao', 'gemini', 'grok']);
 
     let selected = defaultTargets(snapshot, [...DEFAULT_FREE_TARGET_PROVIDERS]);
     selected = toggleTarget(selected, 'gemini');
-    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'deepseek', 'grok']);
+    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'deepseek', 'doubao', 'grok']);
     selected = toggleTarget(selected, 'gemini');
-    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'deepseek', 'grok', 'gemini']);
+    expect(freeModeTargets(selected, snapshot)).toEqual(['chatgpt', 'deepseek', 'doubao', 'grok', 'gemini']);
     expect(freeModeTargets([], snapshot)).toEqual([]);
   });
 
@@ -176,7 +176,7 @@ describe('M4a UI helpers', () => {
       { targets: [], defaultsInitialized: false, userTouched: false },
       defaultTargets(chatgptOnly, [...DEFAULT_FREE_TARGET_PROVIDERS]),
     );
-    expect(selection.targets).toEqual(['chatgpt', 'deepseek']);
+    expect(selection.targets).toEqual(['chatgpt', 'deepseek', 'doubao']);
 
     selection = markFreeTargetsTouched(selection, ['grok']);
     const grokOnly = states({

@@ -304,8 +304,8 @@ describe('workflow engine', () => {
 
     const expected = Object.values(DEFAULT_DEBATE_ROLES).map((provider) => provider === standbyProvider ? 'meta' : provider);
     expect(vi.mocked(host.provider.send).mock.calls.map(([provider]) => provider)).toEqual(expected);
-    // Debate still runs four seats; DeepSeek is the fifth active provider and holds no default debate seat.
-    expect(new Set([...expected, 'deepseek'])).toEqual(new Set(activeProviders));
+    // Debate still runs four seats; DeepSeek and Doubao are the fifth and sixth active providers and hold no default debate seat.
+    expect(new Set([...expected, 'deepseek', 'doubao'])).toEqual(new Set(activeProviders));
   });
 
   it.each(providers.flatMap((standbyProvider) =>
@@ -341,8 +341,8 @@ describe('workflow engine', () => {
           ).flat();
     const expected = baseline.map((provider) => provider === standbyProvider ? 'meta' : provider);
     expect(vi.mocked(host.provider.send).mock.calls.map(([provider]) => provider)).toEqual(expected);
-    // These modes still run four seats; DeepSeek is the fifth active provider and holds no default seat in them.
-    expect(new Set([...expected, 'deepseek'])).toEqual(new Set(activeProviders));
+    // These modes still run four seats; DeepSeek and Doubao are the fifth and sixth active providers and hold no default seat in them.
+    expect(new Set([...expected, 'deepseek', 'doubao'])).toEqual(new Set(activeProviders));
     expect(getLastSnapshot()?.roleMap).toEqual(roles);
     expect(getLastSnapshot()?.steps.map((step) => step.provider)).toEqual(expected);
     expect(getLastSnapshot()?.steps.every((step) => step.status === 'done')).toBe(true);

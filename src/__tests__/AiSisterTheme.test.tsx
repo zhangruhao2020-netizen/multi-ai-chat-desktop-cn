@@ -44,4 +44,13 @@ describe('AI-Sister commemorative theme components', () => {
     expect(html).toContain('deepseek.webp');
     expect(html).not.toContain('data-avatar-fallback="true"');
   });
+
+  it('uses the supplied Doubao portrait for the default provider', () => {
+    const html = renderToStaticMarkup(<AiSisterAvatar provider="doubao" size="md" />);
+
+    expect(html).toContain('data-provider="doubao"');
+    expect(html).toContain('<img');
+    expect(html).toContain('doubao.webp');
+    expect(html).not.toContain('data-avatar-fallback="true"');
+  });
 });

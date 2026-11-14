@@ -15,7 +15,7 @@ For selector updates:
 6. Smoke-test login, prompt insertion, automatic send, completion detection, response capture, and new-session behavior. Check image-only completion when supported.
 7. Run `pnpm verify` and `cargo test --manifest-path src-tauri/Cargo.toml adapters::tests`.
 
-New providers are not adapter-only in v1. The catalog contains `chatgpt`, `claude`, `deepseek`, `gemini`, `grok`, and `meta`; exactly five are active, with Meta AI as the default standby. Adding another provider or changing the five-active invariant requires coordinated adapter, host, UI, test, and security-review changes.
+New providers are not adapter-only in v1. The catalog contains `chatgpt`, `claude`, `deepseek`, `doubao`, `gemini`, `grok`, and `meta`; exactly six are active, with Meta AI as the default standby. Adding another provider or changing the six-active invariant requires coordinated adapter, host, UI, test, and security-review changes.
 
 Use the repository's adapter issue form and pull-request checklist so reports remain reproducible and privacy-safe. Vulnerabilities must be reported privately according to [`SECURITY.md`](./SECURITY.md), not through a public adapter issue.
 

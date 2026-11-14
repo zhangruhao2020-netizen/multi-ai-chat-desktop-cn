@@ -352,7 +352,7 @@ describe('snapshot replay', () => {
     );
   });
 
-  it('falls back to the five shipped free targets when a free snapshot has no derived targets', async () => {
+  it('falls back to the six shipped free targets when a free snapshot has no derived targets', async () => {
     vi.mocked(host.connections.get).mockResolvedValue([...DEFAULT_FREE_TARGET_PROVIDERS].map((provider) => state(provider)));
     const snapshot = buildSnapshot({
       graphId: 'free',

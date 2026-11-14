@@ -116,6 +116,7 @@ export const en: Record<I18nKey, string> = {
   'provider.login': 'Login',
   'provider.metaLoginGuidance': 'Complete guest, email/mobile, or Facebook/Instagram sign-in in this window. A login in another browser cannot return here.',
   'provider.deepseekLoginGuidance': 'Complete phone/email, Google, or Apple sign-in in this window. A login in another browser cannot return here.',
+  'provider.doubaoLoginGuidance': 'Complete phone, Douyin, or Apple sign-in in this window. A login in another browser cannot return here.',
   'provider.moreActions': 'More provider actions',
   'provider.reload': 'Reload',
   'provider.report': 'Report',

@@ -2,7 +2,7 @@
 
 **English** · [繁體中文](./README.zh-TW.md) · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [Deutsch](./README.de.md)
 
-Ask once. Let five signed-in AI web sessions answer, review, challenge, and refine one another. **ChatGPT, Claude, DeepSeek, Gemini, and Grok are the default lineup; Meta AI is an experimental standby option in Settings.** Multi-AI Chat Desktop is a Tauri 2 workflow hub, not five chat windows placed side by side.
+Ask once. Let six signed-in AI web sessions answer, review, challenge, and refine one another. **ChatGPT, Claude, DeepSeek, Doubao, Gemini, and Grok are the default lineup; Meta AI is an experimental standby option in Settings.** Multi-AI Chat Desktop is a Tauri 2 workflow hub, not six chat windows placed side by side.
 
 [**Visit the official website →**](https://ted-h-com.github.io/multi-ai-chat-desktop/) · [Download v1.9.8](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.8) · [All releases](https://github.com/TED-H-com/multi-ai-chat-desktop/releases) · MIT · no API keys · no analytics
 
@@ -25,6 +25,7 @@ Open each provider pane once and sign in on the provider's real page. Credential
 In the experimental Meta AI path, complete guest, email/mobile, or Facebook/Instagram sign-in **in the Meta pane**. A login in another browser cannot return to the isolated app profile.
 
 For DeepSeek, complete phone/email, Google, or Apple sign-in **in the DeepSeek pane**. A login in another browser cannot return to the isolated app profile.
+For Doubao, complete phone, Douyin, or Apple sign-in **in the Doubao pane**. A login in another browser cannot return to the isolated app profile. Outside mainland China, Doubao shows a region restriction until you sign in.
 
 ### macOS first launch
 
@@ -59,9 +60,10 @@ Install the desktop update to receive the engine and bridge repairs; refreshing 
 - **Meta login is recognized.** A visible, editable composer counts as logged in, even if a login button or inert placeholder is still on the page.
 - **Meta login stays in the pane.** Facebook and Instagram sign-in complete inside the app. A login in another browser cannot return to the isolated Meta profile.
 - **Grok Heavy resume timers.** If Grok restores its stop control and continues generating without changing the intermediate answer, stale quiet timers are cancelled and the app waits for generation to finish again.
-- **Optional Meta AI standby.** Six choices, exactly five active. The five defaults stay default; Settings can swap one provider. Profiles stay, and roles and targets repair.
+- **Optional Meta AI standby.** Seven choices, exactly six active. The six defaults stay default; Settings can swap one provider. Profiles stay, and roles and targets repair.
 - **DeepSeek joins the default lineup.** DeepSeek web chat (chat.deepseek.com) is a default provider. Its composer, send, and assistant-message selectors follow the public dscli-agent defaults; they have not been verified against a signed-in session in this app yet.
-- **Portrait and diagnostics.** Meta AI and DeepSeek each have their own portrait. Event log and debug bundle label them without storing prompts or replies.
+- **Doubao joins the default lineup.** Doubao web chat (www.doubao.com/chat) is a default provider. Its logged-out page could not be inspected from outside mainland China (region restriction), so its composer placeholder is the one public write-ups quote and its send and assistant-message selectors are generic fallbacks; none have been verified against a signed-in session in this app yet.
+- **Portrait and diagnostics.** Meta AI, DeepSeek, and Doubao each have their own portrait. Event log and debug bundle label them without storing prompts or replies.
 
 Read the [release notes](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.6).
 
@@ -127,10 +129,11 @@ Report vulnerabilities privately through [SECURITY.md](./SECURITY.md); never put
 - **Windows x64** has verified packaged launch evidence, but artifacts are unsigned and can trigger SmartScreen.
 - **macOS Apple Silicon** is partially verified. The DMG is ad-hoc signed and not notarized; an earlier real-device report opened the app and logged into ChatGPT, Claude, and Gemini, while Grok remained on Cloudflare. Current Grok recovery still needs a live Apple Silicon retest. There is no Intel artifact.
 - **Linux x86_64** packaging is CI-verified only; there is no current maintainer real-device launch report.
-- The v1.9.6 changes have automated coverage only and have not been retested live. No Chat/Work account was available, and no signed-in Grok page was captured live, so the next live check is a Chat/Work account sending one prompt automatically and a signed-in Grok pane staying Ready. Installed apps pick up the Grok and ChatGPT adapter updates through the adapter update (at startup and every six hours) since 2026-09-30, but the ChatGPT Chat/Work engine changes need v1.9.6. A provider engine that goes silent or wedges while its page is never replaced still waits out the 10-minute inactivity window and the 60-minute absolute cap. Meta and DeepSeek stay on `inputStrategy: "default"`. Meta stop, new-session reset, and profile persistence remain unverified, and Grok Heavy was not exercised. Prior Windows packaged-launch evidence, the earlier Apple Silicon ChatGPT/Claude/Gemini login report (Grok remained on Cloudflare), and Linux CI-only packaging remain the current record. There is no new Windows, macOS, or Linux launch check for v1.9.6.
+- The v1.9.6 changes have automated coverage only and have not been retested live. No Chat/Work account was available, and no signed-in Grok page was captured live, so the next live check is a Chat/Work account sending one prompt automatically and a signed-in Grok pane staying Ready. Installed apps pick up the Grok and ChatGPT adapter updates through the adapter update (at startup and every six hours) since 2026-09-30, but the ChatGPT Chat/Work engine changes need v1.9.6. A provider engine that goes silent or wedges while its page is never replaced still waits out the 10-minute inactivity window and the 60-minute absolute cap. Meta, DeepSeek, and Doubao stay on `inputStrategy: "default"`. Meta stop, new-session reset, and profile persistence remain unverified, and Grok Heavy was not exercised. Prior Windows packaged-launch evidence, the earlier Apple Silicon ChatGPT/Claude/Gemini login report (Grok remained on Cloudflare), and Linux CI-only packaging remain the current record. There is no new Windows, macOS, or Linux launch check for v1.9.6.
 - Meta AI guest, email/mobile, or Facebook/Instagram sign-in must finish in the Meta pane. A login in another browser cannot return to the app.
 - DeepSeek phone/email, Google, or Apple sign-in must finish in the DeepSeek pane. A login in another browser cannot return to the app. The DeepSeek selectors are taken from the public dscli-agent defaults (dscli-agent 0.6.0) and the logged-out sign-in page was inspected on 2026-11-13, but no signed-in DeepSeek send/receive has been exercised in this app yet.
-- Snapshots/replay/checkpoints are compatibility-maintained in their shipped form. Beyond the DeepSeek default provider and the experimental Meta AI standby, there is no marketplace, graph editor, further provider expansion, new persistence schema, embedded terminal agent, telemetry roadmap, Developer ID/notarization program, or self-updater planned for this feature-frozen edition.
+- Doubao phone, Douyin, or Apple sign-in must finish in the Doubao pane. A login in another browser cannot return to the app. The Doubao selectors are generic fallbacks built around the publicly quoted composer placeholder, and the logged-out page was blocked by a region restriction on 2026-11-14, so no signed-in Doubao send/receive has been exercised in this app yet.
+- Snapshots/replay/checkpoints are compatibility-maintained in their shipped form. Beyond the DeepSeek and Doubao default providers and the experimental Meta AI standby, there is no marketplace, graph editor, further provider expansion, new persistence schema, embedded terminal agent, telemetry roadmap, Developer ID/notarization program, or self-updater planned for this feature-frozen edition.
 
 See the evidence-based [compatibility matrix](./docs/COMPATIBILITY.md). CI and automated tests are never presented as proof that a live provider account or real desktop device was exercised.
 

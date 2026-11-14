@@ -1,0 +1,68 @@
+{
+  "$schema": "./schema.json",
+  "schemaVersion": 2,
+  "adapterVersion": 1,
+  "provider": "doubao",
+  "displayName": "Doubao",
+  "urls": {
+    "app": "https://www.doubao.com/chat",
+    "login": "https://www.doubao.com/chat",
+    "match": [
+      "www.doubao.com/*",
+      "doubao.com/*"
+    ]
+  },
+  "inputSelectors": [
+    "textarea[placeholder=\"有什么我能帮你的吗？\"]",
+    "textarea[placeholder]",
+    "textarea"
+  ],
+  "sendButtonSelectors": [
+    "button[aria-label=\"发送\"]",
+    "button[aria-label=\"Send\"]",
+    "button[type=\"submit\"]"
+  ],
+  "responseSelectors": [
+    "[data-testid=\"assistant-message\"]",
+    ".message-bubble.assistant",
+    "[class*=\"markdown\"]"
+  ],
+  "loginDetectors": [
+    "textarea[placeholder=\"有什么我能帮你的吗？\"]",
+    "textarea[placeholder]",
+    "textarea",
+    "button[aria-label=\"发送\"]"
+  ],
+  "loggedOutDetectors": [
+    {
+      "selector": "button",
+      "textIncludes": "登录"
+    },
+    {
+      "selector": "button",
+      "textIncludes": "Log In"
+    },
+    {
+      "selector": "body",
+      "textIncludes": "受区域限制"
+    }
+  ],
+  "thinkingDetectors": [
+    "button[aria-label=\"停止\"]",
+    "[aria-label*=\"stop\" i]",
+    "[data-testid*=\"stop\" i]"
+  ],
+  "stopButtonSelectors": [
+    "button[aria-label=\"停止\"]",
+    "[aria-label*=\"stop\" i]",
+    "[data-testid*=\"stop\" i]"
+  ],
+  "inputStrategy": "default",
+  "sendStrategy": "click",
+  "timing": {
+    "doneDelayMs": 5000,
+    "chunkDebounceMs": 600,
+    "statusIntervalMs": 10000,
+    "backupPollMs": 3000
+  }
+}

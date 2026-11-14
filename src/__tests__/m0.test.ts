@@ -19,7 +19,7 @@ describe('M0 shared constants and adapter seeds', () => {
   it('exports bridge and navigation constants from SPEC sections 6.3 and 7.3', () => {
     expect(AI_PROVIDERS.gemini.url).toBe('https://gemini.google.com');
     expect(DOCK_SLOT_PROVIDERS).toEqual(['chatgpt', 'claude', 'gemini', 'grok']);
-    expect(DEFAULT_FREE_TARGET_PROVIDERS).toEqual(['chatgpt', 'claude', 'deepseek', 'gemini', 'grok']);
+    expect(DEFAULT_FREE_TARGET_PROVIDERS).toEqual(['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok']);
     expect(PULL_MAX_DECODED_BYTES).toBe(1_048_576);
     expect(OUTBOX_MAX_BYTES).toBe(10_485_760);
     expect(POLL_PULL_MS).toBe(500);

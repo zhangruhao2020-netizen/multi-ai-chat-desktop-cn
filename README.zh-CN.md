@@ -2,7 +2,7 @@
 
 [English](./README.md) · [繁體中文](./README.zh-TW.md) · **简体中文** · [日本語](./README.ja.md) · [Deutsch](./README.de.md)
 
-只问一次，让五个已登录的 AI 网页会话互相回答、审查、质疑，再一起打磨结果。**ChatGPT、Claude、DeepSeek、Gemini、Grok 是默认阵容；Meta AI 是设置中实验性的备用选项。** Multi-AI Chat Desktop 是以 Tauri 2 打造的多 AI workflow 中枢，不只是把五个聊天窗口并排放在一起。
+只问一次，让六个已登录的 AI 网页会话互相回答、审查、质疑，再一起打磨结果。**ChatGPT、Claude、DeepSeek、豆包、Gemini、Grok 是默认阵容；Meta AI 是设置中实验性的备用选项。** Multi-AI Chat Desktop 是以 Tauri 2 打造的多 AI workflow 中枢，不只是把六个聊天窗口并排放在一起。
 
 [**访问官方网站 →**](https://ted-h-com.github.io/multi-ai-chat-desktop/) · [下载 v1.9.8](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.8) · [所有版本](https://github.com/TED-H-com/multi-ai-chat-desktop/releases) · MIT · 不需 API Key · 无分析追踪
 
@@ -25,6 +25,7 @@
 在实验性的 Meta AI 路径中，访客、邮箱/手机或 Facebook/Instagram 登录请**在 Meta 窗格内**完成。在其他浏览器中的登录无法回到隔离的应用配置。
 
 对于 DeepSeek，手机/邮箱、Google 或 Apple 登录请**在 DeepSeek 窗格内**完成。在其他浏览器中的登录无法回到隔离的应用配置。
+对于豆包，手机、抖音或 Apple 登录请**在豆包窗格内**完成。在其他浏览器中的登录无法回到隔离的应用配置。在中国大陆以外，豆包在登录前会显示区域限制。
 
 ### macOS 首次启动
 
@@ -59,9 +60,10 @@
 - **Meta 登录会被识别。** 可见、可编辑的输入框即算作已登录，即使页面上还留着登录按钮或惰性占位符。
 - **Meta 登录留在窗格内。** Facebook 和 Instagram 登录在应用内完成。在其他浏览器中的登录无法回到隔离的 Meta 配置。
 - **Grok Heavy 的恢复生成计时器。** 如果 Grok 恢复其停止控件并继续生成、而中间答案没有变化，过期的静默计时器会被取消，应用会再次等待生成完成。
-- **可选的 Meta AI 备用。** 六家可选，恰好五家启用。五家默认不变；设置可以替换其中一家。配置保留，角色与目标会修复到当前阵容。
+- **可选的 Meta AI 备用。** 七家可选，恰好六家启用。六家默认不变；设置可以替换其中一家。配置保留，角色与目标会修复到当前阵容。
 - **DeepSeek 加入默认阵容。** DeepSeek 网页端（chat.deepseek.com）是默认服务商。其输入框、发送按钮与助手消息选择器沿用公开的 dscli-agent 默认值，尚未在本应用内以已登录会话验证过。
-- **头像与诊断。** Meta AI 和 DeepSeek 各有自己的头像。事件日志和调试包会标出它们，且不保存 prompt 或回复。
+- **豆包加入默认阵容。** 豆包网页端（www.doubao.com/chat）是默认服务商。因中国大陆以外存在区域限制，未登录页面未能实际检查，其输入框提示语取自公开资料，发送按钮与助手消息选择器为通用兜底，尚未在本应用内以已登录会话验证过。
+- **头像与诊断。** Meta AI、DeepSeek 和豆包各有自己的头像。事件日志和调试包会标出它们，且不保存 prompt 或回复。
 
 阅读[发布说明](https://github.com/TED-H-com/multi-ai-chat-desktop/releases/tag/v1.9.6)。
 
@@ -127,10 +129,11 @@ Workflow 结束后，可以从底部输入框继续同一段应用对话。需�
 - **Windows x64** 有已验证的打包启动证据，但安装包未签名，可能触发 SmartScreen。
 - **macOS Apple Silicon** 部分验证。DMG 是临时签名且未公证；一份较早的真机报告打开了应用并登录了 ChatGPT、Claude 和 Gemini，而 Grok 停留在 Cloudflare。当前的 Grok 恢复仍需在 Apple Silicon 上实机复测。没有 Intel 版本。
 - **Linux x86_64** 打包只有 CI 验证；没有维护者当前的真机启动报告。
-- v1.9.6 的变更只有自动化覆盖，尚未实机复测。没有可用的 Chat/Work 账号，也没有捕获到已登录的 Grok 页面实况，因此下一次实机检查是：用一个 Chat/Work 账号自动发送一条 prompt，以及已登录的 Grok 窗格保持就绪。自 2026-09-30 起，已安装的应用通过 adapter 更新（启动时及每六小时）获取 Grok 和 ChatGPT 的 adapter 更新，但 ChatGPT Chat/Work 的 engine 变更需要 v1.9.6。如果某个服务商 engine 在其页面从未被替换的情况下沉默或卡住，仍会等满 10 分钟无活动窗口和 60 分钟绝对上限。Meta 和 DeepSeek 保持 `inputStrategy: "default"`。Meta 的停止、新会话重置和配置持久化仍未验证，Grok Heavy 未经演练。此前的 Windows 打包启动证据、较早的 Apple Silicon 上 ChatGPT/Claude/Gemini 登录报告（Grok 停留在 Cloudflare）以及 Linux 仅 CI 打包，仍是当前记录。v1.9.6 没有新的 Windows、macOS 或 Linux 启动检查。
+- v1.9.6 的变更只有自动化覆盖，尚未实机复测。没有可用的 Chat/Work 账号，也没有捕获到已登录的 Grok 页面实况，因此下一次实机检查是：用一个 Chat/Work 账号自动发送一条 prompt，以及已登录的 Grok 窗格保持就绪。自 2026-09-30 起，已安装的应用通过 adapter 更新（启动时及每六小时）获取 Grok 和 ChatGPT 的 adapter 更新，但 ChatGPT Chat/Work 的 engine 变更需要 v1.9.6。如果某个服务商 engine 在其页面从未被替换的情况下沉默或卡住，仍会等满 10 分钟无活动窗口和 60 分钟绝对上限。Meta、DeepSeek 和豆包保持 `inputStrategy: "default"`。Meta 的停止、新会话重置和配置持久化仍未验证，Grok Heavy 未经演练。此前的 Windows 打包启动证据、较早的 Apple Silicon 上 ChatGPT/Claude/Gemini 登录报告（Grok 停留在 Cloudflare）以及 Linux 仅 CI 打包，仍是当前记录。v1.9.6 没有新的 Windows、macOS 或 Linux 启动检查。
 - Meta AI 的访客、邮箱/手机或 Facebook/Instagram 登录必须在 Meta 窗格内完成。在其他浏览器中的登录无法回到本应用。
 - DeepSeek 的手机/邮箱、Google 或 Apple 登录必须在 DeepSeek 窗格内完成。在其他浏览器中的登录无法回到本应用。DeepSeek 选择器取自公开的 dscli-agent 默认值（dscli-agent 0.6.0），未登录的登录页已于 2026-11-13 检查过，但尚未在本应用内以已登录会话实际发送/接收过。
-- Snapshot/replay/checkpoint 以其已发布形态做兼容性维护。除 DeepSeek 默认服务商与实验性的 Meta AI 备用外，这个功能冻结的版本不计划做应用市场、图编辑器、更多服务商扩展、新的持久化 schema、内嵌终端 Agent、telemetry 路线图、Developer ID/公证计划或自更新器。
+- 豆包的手机、抖音或 Apple 登录必须在豆包窗格内完成。在其他浏览器中的登录无法回到本应用。豆包选择器是围绕公开输入框提示语搭建的通用兜底，未登录页面因区域限制于 2026-11-14 未能检查，尚未在本应用内以已登录会话实际发送/接收过。
+- Snapshot/replay/checkpoint 以其已发布形态做兼容性维护。除 DeepSeek 与豆包默认服务商、实验性的 Meta AI 备用外，这个功能冻结的版本不计划做应用市场、图编辑器、更多服务商扩展、新的持久化 schema、内嵌终端 Agent、telemetry 路线图、Developer ID/公证计划或自更新器。
 
 参见基于证据的[兼容性矩阵](./docs/COMPATIBILITY.md)。CI 和自动化测试从不会被表述为真实服务商账号或真实桌面设备已被演练的证明。
 

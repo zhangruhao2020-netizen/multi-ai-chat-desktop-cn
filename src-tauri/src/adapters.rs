@@ -184,7 +184,7 @@ pub(crate) fn get_adapter(provider: &str) -> Result<Adapter, String> {
 }
 
 pub(crate) fn all_provider_states() -> Vec<String> {
-    let mut providers = vec!["chatgpt", "claude", "deepseek", "gemini", "grok", "meta"]
+    let mut providers = vec!["chatgpt", "claude", "deepseek", "doubao", "gemini", "grok", "meta"]
         .into_iter()
         .map(str::to_string)
         .collect::<Vec<_>>();
@@ -212,6 +212,7 @@ fn init_adapters() {
         ("chatgpt", include_str!("../../adapters/chatgpt.json")),
         ("claude", include_str!("../../adapters/claude.json")),
         ("deepseek", include_str!("../../adapters/deepseek.json")),
+        ("doubao", include_str!("../../adapters/doubao.json")),
         ("gemini", include_str!("../../adapters/gemini.json")),
         ("grok", include_str!("../../adapters/grok.json")),
         ("meta", include_str!("../../adapters/meta.json")),
@@ -743,7 +744,7 @@ mod tests {
         assert!(!hosts.contains(&"auth.openai.com".to_string()));
         assert!(!hosts.contains(&"auth0.openai.com".to_string()));
 
-        for provider in ["chatgpt", "claude", "deepseek", "gemini", "grok", "meta"] {
+        for provider in ["chatgpt", "claude", "deepseek", "doubao", "gemini", "grok", "meta"] {
             assert!(!app_hosts_for_provider(provider).unwrap().is_empty());
         }
     }
@@ -952,6 +953,9 @@ mod tests {
             ("deepseek", "http://challenges.cloudflare.com/"),
             ("deepseek", "https://auth.openai.com/authorize"),
             ("deepseek", "https://chat.deepseek.com.evil.net/"),
+            ("doubao", "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b"),
+            ("doubao", "https://auth.openai.com/authorize"),
+            ("doubao", "https://www.doubao.com.evil.net/"),
             ("gemini", "https://www.google.com/search"),
             ("gemini", "https://www.google.com/sorryevil"),
             ("gemini", "https://www.google.com.evil.net/sorry"),
@@ -1021,6 +1025,12 @@ mod tests {
                 "https://chat.deepseek.com/sign_in",
                 "https://chat.deepseek.com/a/123",
                 "http://chat.deepseek.com/a/123",
+            ),
+            (
+                "doubao",
+                "https://www.doubao.com/chat",
+                "https://www.doubao.com/chat/abc123",
+                "http://www.doubao.com/chat/abc123",
             ),
             (
                 "meta",
@@ -1138,6 +1148,46 @@ mod tests {
         ] {
             let url = tauri::Url::parse(value).unwrap();
             assert!(!url_allowed_for_provider("deepseek", &url).unwrap(), "{value}");
+        }
+    }
+
+    #[test]
+    fn doubao_initial_seed_is_registered_and_keeps_navigation_narrow() {
+        let doubao = adapters().get("doubao").expect("Doubao adapter is bundled");
+        assert_eq!(doubao.display_name, "Doubao");
+        assert_eq!(doubao.adapter_version, 1);
+        assert_eq!(doubao.schema_version, 2);
+        assert_eq!(doubao.urls.app, "https://www.doubao.com/chat");
+        assert_eq!(doubao.urls.login, "https://www.doubao.com/chat");
+        assert_eq!(
+            doubao.urls.match_patterns,
+            vec!["www.doubao.com/*".to_string(), "doubao.com/*".to_string()]
+        );
+        assert!(doubao.urls.sso_match.is_empty());
+        let hosts = app_hosts_for_provider("doubao").unwrap();
+        assert!(hosts.contains(&"www.doubao.com".to_string()));
+        assert!(hosts.contains(&"doubao.com".to_string()));
+
+        for value in [
+            "https://www.doubao.com/chat",
+            "https://www.doubao.com/chat/abc123",
+            "https://doubao.com/chat",
+            // The region-ban page lives under the app host, so it stays
+            // navigable inside the Doubao pane; login still happens there.
+            "https://www.doubao.com/security/doubao-region-ban?source=1",
+        ] {
+            let url = tauri::Url::parse(value).unwrap();
+            assert!(url_allowed_for_provider("doubao", &url).unwrap(), "{value}");
+        }
+
+        for value in [
+            "https://www.doubao.com.evil.net/",
+            "http://www.doubao.com/chat",
+            "https://www.doubao.com:8443/chat",
+            "https://user:pass@www.doubao.com/chat",
+        ] {
+            let url = tauri::Url::parse(value).unwrap();
+            assert!(!url_allowed_for_provider("doubao", &url).unwrap(), "{value}");
         }
     }
 

@@ -153,7 +153,7 @@ describe('N4 preset catalog', () => {
   });
 
   it('shows live readiness before the user selects a workflow', () => {
-    const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'gemini', 'grok'];
+    const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'];
     const states = Object.fromEntries(
       providers.map((provider, index) => [
         provider,

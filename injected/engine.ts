@@ -493,10 +493,12 @@ class InactiveSendOperationError extends Error {
     if (activeAdapter.provider === 'grok') {
       return queryLastVisible([...GROK_LIVE_TEXTAREA_SELECTORS, ...activeAdapter.inputSelectors]);
     }
-    if (activeAdapter.provider === 'meta' || activeAdapter.provider === 'deepseek') {
+    if (activeAdapter.provider === 'meta' || activeAdapter.provider === 'deepseek' || activeAdapter.provider === 'doubao') {
       // Plain-textarea composers: only a visible, enabled, editable field counts.
       // DeepSeek's page can also hold other textareas (e.g. the sidebar search box),
       // so the first document-order match is not necessarily the composer.
+      // Doubao's composer is a plain textarea too (placeholder observed in public
+      // write-ups); the usable-field check keeps any other textarea from claiming it.
       return queryFirstUsable(activeAdapter.inputSelectors);
     }
     return queryFirst(activeAdapter.inputSelectors);
