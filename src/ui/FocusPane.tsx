@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/context';
 import { formatI18n } from '../i18n/t';
 import type { AdapterPermissionSummary } from './adapterPermissions';
 import { AiSisterAvatar } from './AiSisterTheme';
+import { Button } from './Button';
 import { MarkdownText } from './MarkdownText';
 import type { PresentationByProvider, WebviewPresentationState } from './presentation';
 import { chipState, isStuckProvider } from './providerChipState';
@@ -172,15 +173,16 @@ export function FocusPane({
       )}
 
       {providerAction?.status === 'error' ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200" role="alert">
+        <div className="ui-banner-red mt-3 flex items-center justify-between gap-3 rounded px-3 py-2 text-xs" role="alert">
           <span>{formatI18n(t(providerAction.action === 'report' ? 'provider.reportFailed' : 'provider.openFailed'), { provider: AI_PROVIDERS[providerAction.provider].name })}</span>
-          <button
-            type="button"
-            className="shrink-0 rounded border border-red-400 px-2 py-1 font-medium hover:bg-red-100 dark:border-red-700 dark:hover:bg-red-900"
+          <Button
+            variant="danger"
+            size="sm"
+            className="shrink-0 rounded font-medium"
             onClick={() => void runProviderAction(providerAction.provider, providerAction.action)}
           >
             {t('provider.retry')}
-          </button>
+          </Button>
         </div>
       ) : null}
 
@@ -232,14 +234,17 @@ function FirstRunPanel({
           {t('onboarding.title')}
         </h1>
         <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">{t('onboarding.description')}</p>
-        <div className="ai-sister-onboarding-providers mt-5 grid grid-cols-2 gap-2 min-[900px]:grid-cols-3">
+        {/* Two columns when the pane is wide enough; a single column below
+            ~680px viewport width, where the ~354px pane would truncate the
+            provider names again ("Open Cha…"). */}
+        <div className="ai-sister-onboarding-providers mt-5 grid grid-cols-1 gap-2 min-[680px]:grid-cols-2">
           {providers.map((provider) => {
             const opening = openingProvider === provider;
             return (
               <button
                 key={provider}
                 type="button"
-                className="rounded-md border border-zinc-300 bg-white px-4 py-3 text-left text-sm font-medium shadow-sm transition hover:border-sky-500 hover:bg-sky-50 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-sky-600 dark:hover:bg-sky-950/50"
+                className="min-w-0 rounded-md border border-zinc-300 bg-white px-4 py-3 text-left text-sm font-medium shadow-sm transition hover:border-sky-500 hover:bg-sky-50 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-sky-600 dark:hover:bg-sky-950/50"
                 disabled={openingProvider !== undefined}
                 onClick={() => void activateProvider(provider)}
               >
@@ -338,23 +343,18 @@ function FocusStage({
         </span>
         <div className="flex flex-wrap justify-end gap-2 text-xs">
           {centerSurface === 'text' ? (
-            <button type="button" className="border border-zinc-300 dark:border-zinc-700 px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={onEnlargeCenter}>
+            <Button variant="ghost" size="sm" onClick={onEnlargeCenter}>
               {t('provider.realPage')}
-            </button>
+            </Button>
           ) : (
-            <button type="button" className="border border-zinc-300 dark:border-zinc-700 px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={onCollapseCenter}>
+            <Button variant="ghost" size="sm" onClick={onCollapseCenter}>
               {t('provider.textView')}
-            </button>
+            </Button>
           )}
           {onToggleStageExpanded ? (
-            <button
-              type="button"
-              className="border border-zinc-300 dark:border-zinc-700 px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              aria-pressed={stageExpanded}
-              onClick={onToggleStageExpanded}
-            >
+            <Button variant="ghost" size="sm" aria-pressed={stageExpanded} onClick={onToggleStageExpanded}>
               {stageExpanded ? t('provider.collapseStage') : t('provider.expandStage')}
-            </button>
+            </Button>
           ) : null}
           {showLoginCta ? (
             <button
@@ -366,9 +366,10 @@ function FocusStage({
             </button>
           ) : null}
           <div ref={moreMenuRef} className="relative">
-            <button
-              type="button"
-              className="min-w-8 border border-zinc-300 dark:border-zinc-700 px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-w-8"
               aria-label={t('provider.moreActions')}
               aria-haspopup="menu"
               aria-expanded={moreMenuOpen}
@@ -376,7 +377,7 @@ function FocusStage({
               onClick={() => setMoreMenuOpen((current) => !current)}
             >
               <span aria-hidden="true">&#8943;</span>
-            </button>
+            </Button>
             {moreMenuOpen ? (
               <div
                 id={moreMenuId}
@@ -489,7 +490,7 @@ export function TextCenterView({
   centerTextFinal: boolean;
   idleText?: string;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   if (thinking && !centerTextFinal) {
     return (
       <div className="grid flex-1 place-items-center p-3">
@@ -505,7 +506,7 @@ export function TextCenterView({
     return (
       <div className="flex-1 overflow-auto p-3 text-zinc-900 dark:text-zinc-100">
         <div className="text-sm">
-          <MarkdownText text={centerText} />
+          <MarkdownText text={centerText} locale={locale} />
         </div>
       </div>
     );

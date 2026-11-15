@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AIProvider } from '../../shared/types';
 import { host } from '../host';
 import { t } from '../i18n/t';
+import { Button } from '../ui/Button';
 import { ReplayPanel } from '../ui/ReplayPanel';
 import { getLastSnapshot } from '../workflow/snapshot/recorder';
 import { replaySnapshot } from '../workflow/snapshot/replay';
@@ -66,8 +67,12 @@ function firstElement(node: ReactNode, predicate: (element: ReactElement) => boo
   return match;
 }
 
+function isButtonElement(element: ReactElement): boolean {
+  return element.type === 'button' || element.type === Button;
+}
+
 function buttonWithText(node: ReactNode, text: string): ReactElement {
-  return firstElement(node, (element) => element.type === 'button' && textOf(element).includes(text));
+  return firstElement(node, (element) => isButtonElement(element) && textOf(element).includes(text));
 }
 
 describe('ReplayPanel', () => {
@@ -329,7 +334,7 @@ describe('ReplayPanel', () => {
     const oldRetry = buttonWithText(panel.render(), t('provider.retry', 'en'));
 
     activeProviders.splice(activeProviders.indexOf('meta'), 1, 'grok');
-    expect(findAllElements(panel.render(), (element) => element.type === 'button'
+    expect(findAllElements(panel.render(), (element) => isButtonElement(element)
       && textOf(element).includes(t('provider.retry', 'en')))).toHaveLength(0);
     propsOf(oldRetry).onClick?.();
     await Promise.resolve();
@@ -383,11 +388,11 @@ describe('ReplayPanel', () => {
     expect(html).not.toContain(t('replay.preflightHelp', 'en'));
     expect(findAllElements(
       tree,
-      (element) => element.type === 'button' && textOf(element).includes(t('replay.openLogin', 'en')),
+      (element) => isButtonElement(element) && textOf(element).includes(t('replay.openLogin', 'en')),
     )).toHaveLength(0);
     expect(findAllElements(
       tree,
-      (element) => element.type === 'button' && textOf(element).includes(t('settings.title', 'en')),
+      (element) => isButtonElement(element) && textOf(element).includes(t('settings.title', 'en')),
     )).toHaveLength(0);
     expect(onOpenLogin).not.toHaveBeenCalled();
     expect(host.provider.openLogin).not.toHaveBeenCalled();
@@ -415,7 +420,7 @@ describe('ReplayPanel', () => {
     expect(html).toContain(t('replay.preflightHelp', 'en'));
     expect(findAllElements(
       tree,
-      (element) => element.type === 'button' && textOf(element).includes(t('replay.openLogin', 'en')),
+      (element) => isButtonElement(element) && textOf(element).includes(t('replay.openLogin', 'en')),
     )).toHaveLength(1);
     propsOf(buttonWithText(tree, t('settings.title', 'en'))).onClick?.();
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
@@ -438,7 +443,7 @@ describe('ReplayPanel', () => {
     const oldRetry = buttonWithText(panel.render(), t('provider.retry', 'en'));
 
     activeProviders.splice(activeProviders.indexOf('meta'), 1, 'grok');
-    expect(findAllElements(panel.render(), (element) => element.type === 'button'
+    expect(findAllElements(panel.render(), (element) => isButtonElement(element)
       && textOf(element).includes(t('provider.retry', 'en')))).toHaveLength(0);
     propsOf(oldRetry).onClick?.();
     await Promise.resolve();

@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  DEFAULT_FOCUS_LAYOUT_CONSTRAINTS,
   DEFAULT_FOCUS_PANE_WIDTH,
+  NARROW_MIN_CENTER_WIDTH,
+  NARROW_MIN_FOCUS_PANE_WIDTH,
+  NARROW_WINDOW_BREAKPOINT,
+  SESSION_SIDEBAR_AUTO_COLLAPSE_WIDTH,
   clampFocusPaneWidth,
   dragFocusPaneWidth,
   driveCenteredProviderToStage,
   focusGridTemplateColumns,
   nonEmptyRect,
+  resolveFocusLayoutConstraints,
+  shouldAutoCollapseSessionSidebar,
   throttleWithFrame,
 } from '../ui/focusLayout';
 import { applyPresentationTransitionCommand, waitForPresentationTargetBounds, type PresentationCommandHost } from '../ui/presentationCommands';
@@ -125,6 +132,36 @@ describe('focus layout helpers', () => {
     expect(normalizeSettings({ layoutMode: 'quadrant', focusPaneWidth: 700 }).layoutMode).toBe('focus');
     expect(normalizeSettings({ focusPaneWidth: 250 }).focusPaneWidth).toBe(420);
     expect(normalizeSettings({ columnWidths: { left: 500, right: 320 } }).focusPaneWidth).toBe(500);
+  });
+
+  it('relaxes the focus pane and transcript minima below the narrow-window breakpoint', () => {
+    expect(NARROW_WINDOW_BREAKPOINT).toBe(860);
+    const narrow = resolveFocusLayoutConstraints(700);
+    expect(narrow.minFocusPaneWidth).toBe(NARROW_MIN_FOCUS_PANE_WIDTH);
+    expect(narrow.minFocusPaneWidth).toBe(320);
+    expect(narrow.minCenterWidth).toBe(NARROW_MIN_CENTER_WIDTH);
+    expect(narrow.minCenterWidth).toBe(280);
+    expect(narrow.resizerWidth).toBe(DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.resizerWidth);
+
+    // At the breakpoint and above the default minima still apply.
+    expect(resolveFocusLayoutConstraints(860)).toEqual(DEFAULT_FOCUS_LAYOUT_CONSTRAINTS);
+    expect(resolveFocusLayoutConstraints(1400)).toEqual(DEFAULT_FOCUS_LAYOUT_CONSTRAINTS);
+  });
+
+  it('keeps a 640px window usable: narrow pane plus narrow transcript fit', () => {
+    const constraints = resolveFocusLayoutConstraints(640);
+    const total = constraints.minFocusPaneWidth + constraints.resizerWidth + constraints.minCenterWidth;
+    expect(total).toBeLessThanOrEqual(640);
+    expect(focusGridTemplateColumns(320, constraints)).toBe('320px 6px minmax(280px, 1fr)');
+    expect(clampFocusPaneWidth(560, 640, constraints)).toBe(354);
+  });
+
+  it('auto-collapses the session sidebar when the left column drops below ~560px', () => {
+    expect(SESSION_SIDEBAR_AUTO_COLLAPSE_WIDTH).toBe(560);
+    expect(shouldAutoCollapseSessionSidebar(559)).toBe(true);
+    expect(shouldAutoCollapseSessionSidebar(420)).toBe(true);
+    expect(shouldAutoCollapseSessionSidebar(560)).toBe(false);
+    expect(shouldAutoCollapseSessionSidebar(620)).toBe(false);
   });
 
   it('collapses bursts of scroll-driven bounds syncs into one call per frame', () => {

@@ -33,6 +33,7 @@ import {
 } from '../diagnostics/eventLog';
 import { buildDebugBundle, debugBundleFilename } from '../diagnostics/debugBundle';
 import { useEventLog } from './useEventLog';
+import { Button } from './Button';
 import { ModalDialog } from './ModalDialog';
 import { createSettingsPersistence } from './settingsPersistence';
 import { createTrailingDebounce, type TrailingDebounce } from './trailingDebounce';
@@ -387,9 +388,9 @@ export function SettingsModal({
     >
         <div className="mb-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
           <h2 id="settings-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.title')}</h2>
-          <button type="button" className="border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50" onClick={closeSettings} disabled={saving}>
+          <Button variant="ghost" size="sm" onClick={closeSettings} disabled={saving}>
             {t('settings.close')}
-          </button>
+          </Button>
         </div>
 
         {draft ? (
@@ -604,14 +605,13 @@ export function SettingsModal({
               <section className="space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-4">
                 <span className="block text-xs text-zinc-600 dark:text-zinc-400">{t('settings.updates')}</span>
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    className="border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  <Button
+                    variant="ghost"
                     onClick={() => void checkForUpdates()}
                     disabled={updateCheck.status === 'checking'}
                   >
                     {updateCheck.status === 'checking' ? t('settings.checking') : t('settings.checkForUpdates')}
-                  </button>
+                  </Button>
                   {updateCheck.status === 'up-to-date' ? (
                     <span className="text-xs text-zinc-600 dark:text-zinc-400">{t('settings.upToDate').replace('{version}', updateCheck.version)}</span>
                   ) : null}
@@ -702,14 +702,14 @@ export function SettingsModal({
             <button type="button" className="px-3 py-1.5 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:opacity-50" onClick={closeSettings} disabled={saving}>
               {t('settings.cancel')}
             </button>
-            <button
-              type="button"
-              className="min-w-16 border border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-950 px-3 py-1.5 text-sm text-sky-700 dark:text-sky-100 hover:bg-sky-100 dark:hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-50"
+            <Button
+              variant="subtle"
+              className="min-w-16"
               onClick={() => void save()}
               disabled={!draft || saving}
             >
               {saved ? t('settings.saved') : t('settings.save')}
-            </button>
+            </Button>
           </div>
         </div>
     </ModalDialog>
@@ -737,18 +737,14 @@ function AccessTransparencySection() {
         {PROVIDERS.map((candidate) => {
           const selected = candidate === provider;
           return (
-            <button
+            <Button
               key={candidate}
-              className={`border px-3 py-1.5 text-xs ${
-                selected
-                  ? 'border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-950 text-sky-800 dark:text-sky-100'
-                  : 'border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
+              variant={selected ? 'subtle' : 'ghost'}
               aria-pressed={selected}
               onClick={() => setProvider(candidate)}
             >
               {AI_PROVIDERS[candidate].name}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -880,20 +876,20 @@ export function DiagnosticsSection({
               ))}
             </select>
           </label>
-          <button
-            className="border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+          <Button
+            variant="ghost"
             onClick={() => void copyLog()}
             disabled={filteredEvents.length === 0}
           >
             {copyState === 'copied' ? t('settings.copied') : copyState === 'error' ? t('settings.copyFailed') : t('settings.copyLog')}
-          </button>
-          <button
-            className="border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+          </Button>
+          <Button
+            variant="ghost"
             onClick={() => void exportDebugBundle()}
             disabled={exportState.status === 'exporting'}
           >
             {exportState.status === 'exporting' ? t('settings.exporting') : t('settings.exportDebugBundle')}
-          </button>
+          </Button>
         </div>
       </div>
 

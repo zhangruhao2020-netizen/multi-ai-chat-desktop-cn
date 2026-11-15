@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AIProvider } from '../../shared/types';
 import { t } from '../i18n/t';
+import { Button } from '../ui/Button';
 import { PreflightDialog } from '../ui/PreflightDialog';
 import type { PreflightDialogModel } from '../ui/preflightModel';
 
@@ -14,7 +15,7 @@ afterEach(() => vi.restoreAllMocks());
 
 function button(node: ReactNode, label: string): ReactElement<{ onClick: () => void }> | undefined {
   if (!isValidElement<{ children?: ReactNode }>(node)) return undefined;
-  if (node.type === 'button' && node.props.children === label) return node as ReactElement<{ onClick: () => void }>;
+  if ((node.type === 'button' || node.type === Button) && node.props.children === label) return node as ReactElement<{ onClick: () => void }>;
   for (const child of Children.toArray(node.props.children)) {
     const found = button(child, label);
     if (found) return found;

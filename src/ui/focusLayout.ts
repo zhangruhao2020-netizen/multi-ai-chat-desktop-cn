@@ -2,11 +2,42 @@ import { DEFAULT_DOCK_CONSTRAINTS, clamp } from './dockLayout';
 
 export const DEFAULT_FOCUS_PANE_WIDTH = 560;
 
-export const DEFAULT_FOCUS_LAYOUT_CONSTRAINTS = {
+export const NARROW_WINDOW_BREAKPOINT = 860;
+export const NARROW_MIN_FOCUS_PANE_WIDTH = 320;
+export const NARROW_MIN_CENTER_WIDTH = 280;
+export const SESSION_SIDEBAR_AUTO_COLLAPSE_WIDTH = 560;
+
+export interface FocusLayoutConstraints {
+  minFocusPaneWidth: number;
+  minCenterWidth: number;
+  resizerWidth: number;
+}
+
+export const DEFAULT_FOCUS_LAYOUT_CONSTRAINTS: FocusLayoutConstraints = {
   minFocusPaneWidth: 420,
   minCenterWidth: DEFAULT_DOCK_CONSTRAINTS.minCenterWidth,
   resizerWidth: DEFAULT_DOCK_CONSTRAINTS.resizerWidth,
 };
+
+export function resolveFocusLayoutConstraints(
+  containerWidth: number,
+  base: FocusLayoutConstraints = DEFAULT_FOCUS_LAYOUT_CONSTRAINTS,
+): FocusLayoutConstraints {
+  // Below ~860px the window cannot afford the default 420px focus pane plus a
+  // 360px transcript: relax both minima so the workspace never clips.
+  if (containerWidth < NARROW_WINDOW_BREAKPOINT) {
+    return {
+      minFocusPaneWidth: NARROW_MIN_FOCUS_PANE_WIDTH,
+      minCenterWidth: NARROW_MIN_CENTER_WIDTH,
+      resizerWidth: base.resizerWidth,
+    };
+  }
+  return { ...base };
+}
+
+export function shouldAutoCollapseSessionSidebar(focusPaneWidth: number): boolean {
+  return focusPaneWidth < SESSION_SIDEBAR_AUTO_COLLAPSE_WIDTH;
+}
 
 export function clampFocusPaneWidth(
   width: number,

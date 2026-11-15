@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared panel/banner primitives (H3): the zinc panel and amber/red banner
+   combos were re-typed in every dialog and notice. Prefer these classes for
+   new panels and banners; existing ones migrate file by file with Button. */
+@layer components {
+  .ui-panel {
+    @apply border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900;
+  }
+
+  .ui-banner-amber {
+    @apply border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100;
+  }
+
+  .ui-banner-red {
+    @apply border border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200;
+  }
+}
+
 :root {
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -330,9 +347,14 @@ html.ai-sister .ai-sister-provider-card {
   background: rgba(24, 17, 47, 0.78);
 }
 
-html.ai-sister .ai-sister-onboarding-providers,
 html.ai-sister .ai-sister-connection-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 680px) {
+  html.ai-sister .ai-sister-onboarding-providers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 html.ai-sister .ai-sister-provider-card:hover,

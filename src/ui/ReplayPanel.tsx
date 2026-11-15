@@ -5,6 +5,7 @@ import type { I18nKey } from '../i18n/keys';
 import type { Locale } from '../i18n/resolve';
 import { formatI18n, t } from '../i18n/t';
 import { host, type StoredSnapshotInfo } from '../host';
+import { Button } from './Button';
 import { getLastSnapshot } from '../workflow/snapshot/recorder';
 import { isInactiveStandbyProvider } from '../workflow/graph/preflight';
 import {
@@ -227,35 +228,34 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
                 </p>
               </div>
               {lastSnapshot ? (
-                <button
-                  type="button"
-                  className="border border-emerald-300 dark:border-emerald-700 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-100 hover:bg-emerald-100 dark:hover:bg-emerald-950 disabled:cursor-not-allowed disabled:opacity-50"
+                <Button
+                  variant="primary"
                   disabled={Boolean(busyKey)}
                   onClick={() => void this.startReplay({ kind: 'last', snapshot: lastSnapshot })}
                 >
                   {this.t('replay.lastRun')}
-                </button>
+                </Button>
               ) : null}
             </div>
           </section>
 
-          <section className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
+          <section className="ui-panel p-3">
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
                 <h4 className="text-xs font-semibold uppercase text-zinc-700 dark:text-zinc-300">{this.t('replay.storedSnapshots')}</h4>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">{this.t('replay.durableSnapshotsOptIn')}</p>
               </div>
-              <button
-                type="button"
-                className="border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+              <Button
+                variant="ghost"
+                size="sm"
                 disabled={loadingStored || Boolean(busyKey)}
                 onClick={() => void this.refreshStoredSnapshots()}
               >
                 {this.t('replay.refresh')}
-              </button>
+              </Button>
             </div>
 
-            {listError ? <div className="mb-2 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 px-3 py-2 text-xs text-red-800 dark:text-red-200">{listError}</div> : null}
+            {listError ? <div className="ui-banner-red mb-2 px-3 py-2 text-xs">{listError}</div> : null}
 
             {loadingStored ? <div className="text-xs text-zinc-500 dark:text-zinc-500">{this.t('replay.loadingStoredSnapshots')}</div> : null}
             {!loadingStored && storedSnapshots.length === 0 ? (
@@ -274,22 +274,22 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
                         <div className="truncate text-zinc-500 dark:text-zinc-500">{localTime(snapshot.createdAt, this.locale()) ?? this.t('replay.createdTimeUnknown')}</div>
                       </div>
                       <div className="flex gap-2">
-                        <button
-                          type="button"
-                          className="border border-emerald-300 dark:border-emerald-700 px-2 py-1 text-emerald-700 dark:text-emerald-100 hover:bg-emerald-100 dark:hover:bg-emerald-950 disabled:cursor-not-allowed disabled:opacity-50"
+                        <Button
+                          variant="primary"
+                          size="sm"
                           disabled={Boolean(busyKey)}
                           onClick={() => void this.startReplay(replaySource)}
                         >
                           {this.t('replay.replay')}
-                        </button>
-                        <button
-                          type="button"
-                          className="border border-red-300 dark:border-red-800 px-2 py-1 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
                           disabled={Boolean(busyKey)}
                           onClick={() => void this.deleteStoredSnapshot(snapshot.id)}
                         >
                           {this.t('replay.delete')}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );
@@ -303,21 +303,23 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
           <div role={notice.kind === 'error' ? 'alert' : undefined} className={`mt-3 border px-3 py-2 text-xs ${noticeClass(notice.kind)}`}>
             {notice.text}
             {retryLoginProvider && !this.isInactiveStandby(retryLoginProvider) ? (
-              <button
-                type="button"
-                className="ml-3 border border-red-400 px-2 py-1 font-medium hover:bg-red-100 dark:border-red-700 dark:hover:bg-red-900"
+              <Button
+                variant="danger"
+                size="sm"
+                className="ml-3 font-medium"
                 onClick={() => void this.openProviderLogin(retryLoginProvider)}
               >
                 {this.t('provider.retry')}
-              </button>
+              </Button>
             ) : retryLoginProvider && this.props.onOpenSettings ? (
-              <button
-                type="button"
-                className="ml-3 border border-red-400 px-2 py-1 font-medium hover:bg-red-100 dark:border-red-700 dark:hover:bg-red-900"
+              <Button
+                variant="danger"
+                size="sm"
+                className="ml-3 font-medium"
                 onClick={() => this.openSettings()}
               >
                 {this.t('settings.title')}
-              </button>
+              </Button>
             ) : null}
           </div>
         ) : null}
@@ -341,13 +343,13 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
               onChange={(event) => this.updateQuestion(event)}
               placeholder={this.t('replay.originalQuestion')}
             />
-            <button
+            <Button
               type="submit"
-              className="border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 text-emerald-700 dark:text-emerald-100 hover:bg-emerald-100 dark:hover:bg-emerald-950 disabled:cursor-not-allowed disabled:opacity-50"
+              variant="primary"
               disabled={Boolean(busyKey) || question.trim().length === 0}
             >
               {this.t('replay.replay')}
-            </button>
+            </Button>
           </form>
         </section>
       );
@@ -364,14 +366,14 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
               currentVersion: detail.currentVersion,
             })}
           </p>
-          <button
-            type="button"
-            className="mt-3 border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 text-emerald-700 dark:text-emerald-100 hover:bg-emerald-100 dark:hover:bg-emerald-950 disabled:cursor-not-allowed disabled:opacity-50"
+          <Button
+            variant="primary"
+            className="mt-3"
             disabled={Boolean(busyKey)}
             onClick={() => void this.startReplay(block.source, { replayWithCurrentGraph: true })}
           >
             {this.t('replay.replayWithCurrentGraph')}
-          </button>
+          </Button>
         </section>
       );
     }
@@ -393,22 +395,14 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
                     <span>{providerName(provider)} {standby ? this.t('settings.providerStandby') : this.t('replay.unavailable')}</span>
                     {standby ? (
                       this.props.onOpenSettings ? (
-                        <button
-                          type="button"
-                          className="border border-emerald-300 dark:border-emerald-700 px-2 py-1 text-emerald-700 dark:text-emerald-100 hover:bg-emerald-100 dark:hover:bg-emerald-950"
-                          onClick={() => this.openSettings()}
-                        >
+                        <Button variant="primary" size="sm" onClick={() => this.openSettings()}>
                           {this.t('settings.title')}
-                        </button>
+                        </Button>
                       ) : null
                     ) : (
-                      <button
-                        type="button"
-                        className="border border-emerald-300 dark:border-emerald-700 px-2 py-1 text-emerald-700 dark:text-emerald-100 hover:bg-emerald-100 dark:hover:bg-emerald-950"
-                        onClick={() => void this.openProviderLogin(provider)}
-                      >
+                      <Button variant="primary" size="sm" onClick={() => void this.openProviderLogin(provider)}>
                         {this.t('replay.openLogin')}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 );

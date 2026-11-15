@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AIProvider, ProviderState } from '../../shared/types';
 import { host } from '../host';
 import { t } from '../i18n/t';
+import { Button } from '../ui/Button';
 import { SettingsModal } from '../ui/SettingsModal';
 import { defaultSettings, type AppSettings } from '../ui/settingsModel';
 import { createSettingsPersistence } from '../ui/settingsPersistence';
@@ -25,6 +26,10 @@ interface ControlProps {
   value?: string;
   onChange?: (event: { target: { value: string } }) => void;
   onClick?: () => void;
+}
+
+function isButtonElement(element: ReactElement<ControlProps>): boolean {
+  return element.type === 'button' || element.type === Button;
 }
 
 function control(node: ReactNode, matches: (element: ReactElement<ControlProps>) => boolean): ReactElement<ControlProps> | undefined {
@@ -77,18 +82,18 @@ describe('SettingsModal standby save ordering', () => {
     control(ui.render(), (element) => element.type === 'select' && element.props.value === 'meta')!
       .props.onChange!({ target: { value: 'grok' } });
     const tree = ui.render();
-    const save = control(tree, (element) => element.type === 'button' && element.props.children === t('settings.save', 'en'))!
+    const save = control(tree, (element) => isButtonElement(element) && element.props.children === t('settings.save', 'en'))!
       .props.onClick!;
     save();
     save();
-    await control(tree, (element) => element.type === 'button' && element.props.children === t('settings.close', 'en'))!
+    await control(tree, (element) => isButtonElement(element) && element.props.children === t('settings.close', 'en'))!
       .props.onClick!();
     expect(ui.onClose).not.toHaveBeenCalled();
     expect(write).toHaveBeenCalledTimes(1);
     finishSwap();
     await vi.waitFor(() => expect(ui.onSaved).toHaveBeenCalledTimes(1));
     expect(write).toHaveBeenCalledTimes(1);
-    await control(ui.render(), (element) => element.type === 'button' && element.props.children === t('settings.close', 'en'))!
+    await control(ui.render(), (element) => isButtonElement(element) && element.props.children === t('settings.close', 'en'))!
       .props.onClick!();
     expect(ui.onClose).toHaveBeenCalledTimes(1);
   });
@@ -103,7 +108,7 @@ describe('SettingsModal standby save ordering', () => {
     control(ui.render(), (element) => element.type === 'select' && element.props.value === 'meta')!
       .props.onChange!({ target: { value: 'grok' } });
     const tree = ui.render();
-    control(tree, (element) => element.type === 'button' && element.props.children === t('settings.save', 'en'))!
+    control(tree, (element) => isButtonElement(element) && element.props.children === t('settings.save', 'en'))!
       .props.onClick!();
     control(tree, (element) => element.type === 'select' && element.props.value === 'system')!
       .props.onChange!({ target: { value: 'ja' } });
@@ -131,9 +136,9 @@ describe('SettingsModal standby save ordering', () => {
     control(ui.render(), (element) => element.type === 'input' && element.props.value === '16')!
       .props.onChange!({ target: { value: '18' } });
     const tree = ui.render();
-    const close = control(tree, (element) => element.type === 'button' && element.props.children === t('settings.close', 'en'))!
+    const close = control(tree, (element) => isButtonElement(element) && element.props.children === t('settings.close', 'en'))!
       .props.onClick!();
-    control(tree, (element) => element.type === 'button' && element.props.children === t('settings.save', 'en'))!
+    control(tree, (element) => isButtonElement(element) && element.props.children === t('settings.save', 'en'))!
       .props.onClick!();
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     finishFont();

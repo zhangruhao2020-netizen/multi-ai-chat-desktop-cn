@@ -17,6 +17,7 @@ export interface ConversationSessionMessage {
   modeRole?: string;
   final?: boolean;
   truncated?: boolean;
+  createdAt?: number;
 }
 
 export interface ConversationSession {
@@ -167,6 +168,8 @@ export function normalizeConversationSessionMessage(value: unknown): Conversatio
   if (modeRole) message.modeRole = modeRole;
   if (typeof value.final === 'boolean') message.final = value.final;
   if (typeof value.truncated === 'boolean') message.truncated = value.truncated;
+  const createdAt = normalizeTimestamp(value.createdAt);
+  if (createdAt !== undefined) message.createdAt = createdAt;
   return message;
 }
 

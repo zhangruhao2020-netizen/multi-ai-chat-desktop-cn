@@ -78,6 +78,7 @@ vi.mock('react', async (importOriginal) => {
 });
 
 import { t } from '../i18n/t';
+import { Button } from '../ui/Button';
 import { InputBar } from '../ui/InputBar';
 
 interface InputBarProps {
@@ -167,8 +168,12 @@ function firstElement(renderer: Renderer, predicate: (element: ReactElement) => 
   return propsOf(match);
 }
 
+function isButtonElement(element: ReactElement): boolean {
+  return element.type === 'button' || element.type === Button;
+}
+
 function buttonWithText(renderer: Renderer, text: string): ElementProps {
-  return firstElement(renderer, (element) => element.type === 'button' && textOf(element).includes(text));
+  return firstElement(renderer, (element) => isButtonElement(element) && textOf(element).includes(text));
 }
 
 function sendButton(renderer: Renderer): ElementProps {

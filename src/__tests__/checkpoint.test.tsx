@@ -5,6 +5,7 @@ import { resetBusForTests } from '../bridge/bus';
 import { t } from '../i18n/t';
 import { awaitCheckpoint, resetCheckpointForTests, type PendingCheckpoint } from '../workflow/checkpoint';
 import { resetCancelState } from '../workflow/cancel';
+import { Button } from '../ui/Button';
 import { CheckpointCard } from '../ui/CheckpointCard';
 
 interface ElementProps {
@@ -23,6 +24,10 @@ function textOf(node: ReactNode): string {
   if (Array.isArray(node)) return node.map(textOf).join('');
   if (isValidElement(node)) return textOf(propsOf(node).children);
   return '';
+}
+
+function isButtonElement(element: ReactElement): boolean {
+  return element.type === 'button' || element.type === Button;
 }
 
 function findAllElements(node: ReactNode, predicate: (element: ReactElement) => boolean): ReactElement[] {
@@ -78,7 +83,7 @@ describe('CheckpointCard', () => {
     propsOf(textarea).onChange?.({ currentTarget: { value: 'new edit' } });
     expect(onDraftChange).toHaveBeenCalledWith('new edit');
 
-    const confirm = firstElement(tree, (element) => element.type === 'button' && textOf(element).includes(t('checkpoint.confirm', 'en')));
+    const confirm = firstElement(tree, (element) => isButtonElement(element) && textOf(element).includes(t('checkpoint.confirm', 'en')));
     propsOf(confirm).onClick?.();
 
     await expect(decision).resolves.toEqual({ action: 'confirm', draft: 'edited draft' });
@@ -88,7 +93,7 @@ describe('CheckpointCard', () => {
     const checkpoint = pendingCheckpoint({ nodeId: 'con' });
     const decision = awaitCheckpoint(checkpoint);
     const tree = CheckpointCard({ checkpoint, draft: checkpoint.draft, onDraftChange: vi.fn() });
-    const skip = firstElement(tree, (element) => element.type === 'button' && textOf(element).includes(t('checkpoint.skip', 'en')));
+    const skip = firstElement(tree, (element) => isButtonElement(element) && textOf(element).includes(t('checkpoint.skip', 'en')));
 
     propsOf(skip).onClick?.();
 
@@ -105,7 +110,7 @@ describe('CheckpointCard', () => {
       onDraftChange: vi.fn(),
       onNativeEdit,
     });
-    const nativeEdit = firstElement(tree, (element) => element.type === 'button' && textOf(element).includes(t('checkpoint.editInProvider', 'en')));
+    const nativeEdit = firstElement(tree, (element) => isButtonElement(element) && textOf(element).includes(t('checkpoint.editInProvider', 'en')));
 
     propsOf(nativeEdit).onClick?.();
 

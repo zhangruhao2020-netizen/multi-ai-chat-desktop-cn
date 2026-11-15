@@ -1,12 +1,17 @@
 import type { ReactNode } from 'react';
+import type { Locale } from '../i18n/resolve';
+import { t } from '../i18n/t';
+import { CopyButton } from './CopyButton';
 
 export interface MarkdownTextProps {
   text: string;
+  locale?: Locale;
 }
 
 interface Fence {
   character: '`' | '~';
   length: number;
+  info: string;
 }
 
 interface ListItemMatch {
@@ -81,8 +86,8 @@ function findClosingMarker(text: string, marker: string, contentStart: number): 
   return -1;
 }
 
-function readMarkdownLink(text: string, start: number): MarkdownLinkMatch | null {
-  if (text[start] !== '[' || text[start - 1] === '!') return null;
+function readMarkdownLink(text: string, start: number, allowImagePrefix = false): MarkdownLinkMatch | null {
+  if (text[start] !== '[' || (text[start - 1] === '!' && !allowImagePrefix)) return null;
 
   let labelEnd = start + 1;
   while (labelEnd < text.length) {
@@ -221,6 +226,28 @@ function renderInline(text: string, keyPrefix: string, allowLinks = true, depth 
       }
     }
 
+    if (allowLinks && character === '!') {
+      const image = readMarkdownLink(text, cursor + 1, true);
+      if (image) {
+        if (image.href) {
+          flushPlainText();
+          nodes.push(
+            <img
+              key={nextKey()}
+              src={image.href}
+              alt={image.label}
+              loading="lazy"
+              className="max-w-full rounded"
+            />,
+          );
+        } else {
+          plainText += `!${image.raw}`;
+        }
+        cursor = image.end;
+        continue;
+      }
+    }
+
     if (allowLinks && character === '[') {
       const link = readMarkdownLink(text, cursor);
       if (link) {
@@ -312,7 +339,7 @@ function matchFence(line: string): Fence | null {
   const match = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
   if (!match) return null;
   if (match[1][0] === '`' && match[2].includes('`')) return null;
-  return { character: match[1][0] as Fence['character'], length: match[1].length };
+  return { character: match[1][0] as Fence['character'], length: match[1].length, info: match[2].trim() };
 }
 
 function closesFence(line: string, fence: Fence): boolean {
@@ -403,7 +430,7 @@ function renderHeading(content: string, level: number, key: string): ReactNode {
   );
 }
 
-function renderBlocks(text: string): ReactNode[] {
+function renderBlocks(text: string, locale: Locale = 'en'): ReactNode[] {
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
   const blocks: ReactNode[] = [];
   let cursor = 0;
@@ -427,13 +454,18 @@ function renderBlocks(text: string): ReactNode[] {
         cursor += 1;
       }
       if (cursor < lines.length) cursor += 1;
+      const code = codeLines.join('\n');
+      const language = fence.info.split(/\s+/)[0] ?? '';
       blocks.push(
-        <pre
-          key={key}
-          className="my-3 overflow-x-auto whitespace-pre rounded-md bg-zinc-100 p-3 text-sm leading-relaxed dark:bg-zinc-900"
-        >
-          <code className="font-mono">{codeLines.join('\n')}</code>
-        </pre>,
+        <div key={key} className="my-3 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-3 py-1 dark:border-zinc-800 dark:bg-zinc-900">
+            <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">{language || 'code'}</span>
+            <CopyButton text={code} label={t('chat.copyCode', locale)} copiedLabel={t('chat.copied', locale)} />
+          </div>
+          <pre className="overflow-x-auto whitespace-pre bg-zinc-100 p-3 text-sm leading-relaxed dark:bg-zinc-900">
+            <code className="font-mono">{code}</code>
+          </pre>
+        </div>,
       );
       continue;
     }
@@ -568,6 +600,6 @@ function renderBlocks(text: string): ReactNode[] {
   return blocks;
 }
 
-export function MarkdownText({ text }: MarkdownTextProps) {
-  return <div className="min-w-0 break-words leading-relaxed">{renderBlocks(text)}</div>;
+export function MarkdownText({ text, locale = 'en' }: MarkdownTextProps) {
+  return <div className="min-w-0 break-words leading-relaxed">{renderBlocks(text, locale)}</div>;
 }

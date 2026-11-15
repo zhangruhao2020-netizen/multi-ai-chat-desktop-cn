@@ -8,6 +8,7 @@ import {
   createConversationSession,
   loadConversationSessions,
   normalizeConversationSession,
+  normalizeConversationSessionMessage,
   normalizeConversationSessions,
   removeConversationSession,
   saveConversationSessions,
@@ -125,6 +126,20 @@ describe('conversation sessions', () => {
     });
     expect(normalizeConversationSession({ id: ' ' })).toBeUndefined();
     expect(normalizeConversationSessions({ sessions: [] })).toEqual([]);
+  });
+
+  it('keeps a message timestamp when present and drops an invalid one', () => {
+    expect(
+      normalizeConversationSessionMessage({ id: 'm1', role: 'user', content: 'hi', createdAt: 1763172245000 }),
+    ).toEqual({ id: 'm1', role: 'user', content: 'hi', createdAt: 1763172245000 });
+    expect(
+      normalizeConversationSessionMessage({ id: 'm2', role: 'ai', content: 'hello', createdAt: 'yesterday' }),
+    ).toEqual({ id: 'm2', role: 'ai', content: 'hello' });
+    expect(normalizeConversationSessionMessage({ id: 'm3', role: 'user', content: 'no time' })).toEqual({
+      id: 'm3',
+      role: 'user',
+      content: 'no time',
+    });
   });
 
   it('reuses and fully resets an already-empty conversation instead of creating a duplicate', () => {

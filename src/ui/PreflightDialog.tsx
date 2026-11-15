@@ -4,6 +4,7 @@ import type { AIProvider } from '../../shared/types';
 import type { Locale } from '../i18n/resolve';
 import { formatI18n, t } from '../i18n/t';
 import { isInactiveStandbyProvider } from '../workflow/graph/preflight';
+import { Button } from './Button';
 import { ModalDialog } from './ModalDialog';
 import type { PreflightDialogModel } from './preflightModel';
 
@@ -77,47 +78,47 @@ export function PreflightDialog({
             const standby = isInactiveStandbyProvider(item.provider, activeProviders);
             const reason = standby ? t('settings.providerStandby', locale) : item.reason;
             return (
-              <div key={item.provider} className="flex items-center justify-between gap-3 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-2">
+              <div key={item.provider} className="ui-panel flex items-center justify-between gap-3 p-2">
                 <div>
                   <span style={{ color: AI_PROVIDERS[item.provider].color }}>{item.label}</span>
                   <span className="text-zinc-600 dark:text-zinc-400"> - {reason}</span>
                 </div>
                 {standby ? (
                   onOpenSettings ? (
-                    <button type="button" className="border border-emerald-300 dark:border-emerald-700 px-2 py-1 text-xs hover:bg-emerald-100 dark:hover:bg-emerald-950" onClick={openSettings}>
+                    <Button variant="primary" size="sm" onClick={openSettings}>
                       {t('settings.title', locale)}
-                    </button>
+                    </Button>
                   ) : null
                 ) : (
-                  <button type="button" className="border border-emerald-300 dark:border-emerald-700 px-2 py-1 text-xs hover:bg-emerald-100 dark:hover:bg-emerald-950" onClick={() => void openLogin(item.provider)}>
+                  <Button variant="primary" size="sm" onClick={() => void openLogin(item.provider)}>
                     {t('preflight.openLogin', locale)}
-                  </button>
+                  </Button>
                 )}
               </div>
             );
           })}
           {model.aliased.map((item) => (
-            <div key={item.provider} className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-2">
+            <div key={item.provider} className="ui-panel p-2">
               <span style={{ color: AI_PROVIDERS[item.provider].color }}>{item.label}</span>
               <span className="text-zinc-600 dark:text-zinc-400"> - {item.reason}</span>
             </div>
           ))}
         </div>
         {loginErrorItem && !loginErrorIsStandby ? (
-          <div role="alert" className="mt-3 border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+          <div role="alert" className="ui-banner-red mt-3 px-3 py-2 text-xs">
             {formatI18n(t('provider.openFailed', locale), { provider: AI_PROVIDERS[loginErrorItem.provider].name })}
-            <button type="button" className="ml-3 border border-red-400 px-2 py-1 font-medium hover:bg-red-100 dark:border-red-700 dark:hover:bg-red-900" onClick={() => void openLogin(loginErrorItem.provider)}>
+            <Button variant="danger" size="sm" className="ml-3 font-medium" onClick={() => void openLogin(loginErrorItem.provider)}>
               {t('provider.retry', locale)}
-            </button>
+            </Button>
           </div>
         ) : null}
         <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" className="border border-zinc-300 px-3 py-2 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900" onClick={() => dismiss(onClose)}>
+          <Button variant="ghost" onClick={() => dismiss(onClose)}>
             {t('preflight.close', locale)}
-          </button>
-          <button type="button" className="border border-sky-300 px-3 py-2 text-xs hover:bg-sky-100 dark:border-sky-700 dark:hover:bg-sky-950" onClick={() => dismiss(onSwitchMode)}>
+          </Button>
+          <Button variant="subtle" onClick={() => dismiss(onSwitchMode)}>
             {t('preflight.switchMode', locale)}
-          </button>
+          </Button>
         </div>
     </ModalDialog>
   );

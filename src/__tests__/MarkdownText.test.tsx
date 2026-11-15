@@ -97,4 +97,33 @@ second line
     expect(html).not.toContain('href="data:');
     expect(html).not.toContain('target="_blank"');
   });
+
+  it('renders markdown images as lazy img elements', () => {
+    const html = renderMarkdown('Here is a diagram:\n\n![architecture](https://example.com/arch.png)\n\nDone.');
+
+    expect(html).toContain('<img');
+    expect(html).toContain('src="https://example.com/arch.png"');
+    expect(html).toContain('alt="architecture"');
+    expect(html).toContain('loading="lazy"');
+    expect(html).not.toContain('![architecture](https://example.com/arch.png)');
+  });
+
+  it('keeps image syntax literal when the URL is not a safe http URL', () => {
+    const html = renderMarkdown('![bad](javascript:alert(1)) and ![alsobad](data:text/html,boom)');
+
+    expect(html).not.toContain('<img');
+    expect(html).toContain('![bad](javascript:alert(1))');
+    expect(html).toContain('![alsobad](data:text/html,boom)');
+  });
+
+  it('labels fenced code blocks with their language and adds a copy button', () => {
+    const html = renderMarkdown('```tsx\nconst value = 1;\n```\n\n```\nplain\n```');
+
+    expect(html).toContain('>tsx</span>');
+    expect(html).toContain('aria-label="Copy code"');
+    expect(html).toContain('>Copy code</span>');
+    expect(html).toContain('>code</span>');
+    expect(html).toContain('const value = 1;');
+    expect(html).toContain('plain');
+  });
 });

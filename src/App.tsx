@@ -53,6 +53,7 @@ import {
 import { FocusPane, type CenterSurface } from './ui/FocusPane';
 import { InputBar } from './ui/InputBar';
 import { MarkdownText } from './ui/MarkdownText';
+import { CopyButton } from './ui/CopyButton';
 import { makeFileDragGuard } from './ui/fileDrop';
 import { PreflightDialog } from './ui/PreflightDialog';
 import { PresetCatalog } from './ui/PresetCatalog';
@@ -64,12 +65,14 @@ import { StepTimeoutDialog, type StepTimeoutDialogState } from './ui/StepTimeout
 import { TargetChips } from './ui/TargetChips';
 import { findScrollActiveProvider, isTranscriptNearEnd, scrollTranscriptToEnd, scrollTranscriptToProviderMessage } from './ui/transcriptScroll';
 import {
-  DEFAULT_FOCUS_LAYOUT_CONSTRAINTS,
+  DEFAULT_FOCUS_PANE_WIDTH,
   clampFocusPaneWidth,
   dragFocusPaneWidth,
   driveCenteredProviderToStage as driveCenteredProviderToStageCommand,
   focusGridTemplateColumns,
   nonEmptyRect,
+  resolveFocusLayoutConstraints,
+  shouldAutoCollapseSessionSidebar,
   throttleWithFrame,
 } from './ui/focusLayout';
 import { isSerialMode } from './ui/modeRoles';
@@ -146,6 +149,7 @@ interface Bubble {
   final?: boolean;
   truncated?: boolean;
   modeRole?: string;
+  createdAt?: number;
 }
 
 const PROVIDERS = Object.keys(AI_PROVIDERS) as AIProvider[];
@@ -166,6 +170,7 @@ function conversationMessages(messages: readonly Bubble[]): ConversationSessionM
     ...(message.modeRole ? { modeRole: message.modeRole } : {}),
     ...(typeof message.final === 'boolean' ? { final: message.final } : {}),
     ...(typeof message.truncated === 'boolean' ? { truncated: message.truncated } : {}),
+    ...(typeof message.createdAt === 'number' ? { createdAt: message.createdAt } : {}),
   }));
 }
 
@@ -199,6 +204,7 @@ function bubblesFromSession(session: ConversationSession): Bubble[] {
     ...(message.modeRole ? { modeRole: message.modeRole } : {}),
     ...(typeof message.final === 'boolean' ? { final: message.final } : {}),
     ...(typeof message.truncated === 'boolean' ? { truncated: message.truncated } : {}),
+    ...(typeof message.createdAt === 'number' ? { createdAt: message.createdAt } : {}),
   }));
 }
 
@@ -329,6 +335,12 @@ export default function App() {
   const [initialRestoreComplete, setInitialRestoreComplete] = useState(false);
   const [connectionSnapshotLoaded, setConnectionSnapshotLoaded] = useState(false);
   const [focusPaneWidth, setFocusPaneWidth] = useState(() => defaultSettings().focusPaneWidth);
+  const [windowWidth, setWindowWidth] = useState(() => (typeof window === 'undefined' ? 1280 : window.innerWidth));
+  // Auto-collapse (H2): the session sidebar drops to icons when the left column
+  // narrows below ~560px, and comes back when it widens again. This is separate
+  // from the manual toggle so the user's own preference still wins on toggle.
+  const [sessionSidebarAutoCollapsed, setSessionSidebarAutoCollapsed] = useState(false);
+  const prevFocusPaneWidthRef = useRef(DEFAULT_FOCUS_PANE_WIDTH);
   const [stageExpanded, setStageExpanded] = useState(false);
   const [messagesMaximized, setMessagesMaximized] = useState(false);
   const [scrollFocusedProvider, setScrollFocusedProvider] = useState<AIProvider | undefined>();
@@ -492,6 +504,17 @@ export default function App() {
   useEffect(() => {
     saveSessionSidebarCollapsed(sessionSidebarCollapsed);
   }, [sessionSidebarCollapsed]);
+
+  // H2: collapse the session sidebar when the left column narrows below ~560px,
+  // restore it when it widens again. Only the crossing matters, so a manual
+  // expand while narrow is respected until the next widen/narrow crossing.
+  useEffect(() => {
+    const wasNarrow = shouldAutoCollapseSessionSidebar(prevFocusPaneWidthRef.current);
+    const isNarrow = shouldAutoCollapseSessionSidebar(focusPaneWidth);
+    prevFocusPaneWidthRef.current = focusPaneWidth;
+    if (isNarrow && !wasNarrow) setSessionSidebarAutoCollapsed(true);
+    else if (!isNarrow && wasNarrow) setSessionSidebarAutoCollapsed(false);
+  }, [focusPaneWidth]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -777,6 +800,7 @@ export default function App() {
             content,
             truncated,
             final: message.action === 'RESPONSE_DONE',
+            createdAt: Date.now(),
           },
         ];
       });
@@ -1388,7 +1412,9 @@ export default function App() {
   useEffect(() => {
     const onResize = () => {
       const containerWidth = gridRef.current?.getBoundingClientRect().width ?? window.innerWidth;
-      setFocusPaneWidth((current) => clampFocusPaneWidth(current, containerWidth));
+      setWindowWidth(containerWidth);
+      const constraints = resolveFocusLayoutConstraints(containerWidth);
+      setFocusPaneWidth((current) => clampFocusPaneWidth(current, containerWidth, constraints));
       resyncNativeBounds();
     };
     window.addEventListener('resize', onResize);
@@ -1469,7 +1495,7 @@ export default function App() {
         replayContextSessionRef.current === activeSessionId ? buildConversationReplayContext(messages) : undefined;
       setMessages((current) => [
         ...current,
-        { id: createConversationMessageId('user'), role: 'user', content: trimmed, final: true },
+        { id: createConversationMessageId('user'), role: 'user', content: trimmed, final: true, createdAt: Date.now() },
       ]);
       setIsProcessing(processingAfterSend());
       setProcessTrace(createProcessTrace(mode, workflowTargets ?? [], localeRef.current, presetId));
@@ -1769,14 +1795,15 @@ export default function App() {
       return;
     }
     const containerWidth = gridRef.current?.getBoundingClientRect().width ?? window.innerWidth;
+    const constraints = resolveFocusLayoutConstraints(containerWidth);
     const maxWidth = Math.max(
-      DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.minFocusPaneWidth,
-      containerWidth - DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.minCenterWidth - DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.resizerWidth,
+      constraints.minFocusPaneWidth,
+      containerWidth - constraints.minCenterWidth - constraints.resizerWidth,
     );
     const nextWidth = dragFocusPaneWidth(
       dragStartFocusPaneWidth.current,
       deltaX,
-      DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.minFocusPaneWidth,
+      constraints.minFocusPaneWidth,
       maxWidth,
     );
     setFocusPaneWidth(nextWidth);
@@ -1905,11 +1932,21 @@ export default function App() {
     setIsProcessing(processingAfterSettle());
   }, [setManualFocusLock]);
 
-  const layoutWidth = gridRef.current?.getBoundingClientRect().width ?? (typeof window === 'undefined' ? 1280 : window.innerWidth);
+  // H1: below ~860px the focus pane minimum drops to 320px and the transcript
+  // minimum to 280px, so the workspace no longer clips at narrow window widths.
+  const focusLayoutConstraints = resolveFocusLayoutConstraints(windowWidth);
+  const layoutWidth = windowWidth;
   const focusPaneMaxWidth = Math.max(
-    DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.minFocusPaneWidth,
-    layoutWidth - DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.minCenterWidth - DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.resizerWidth,
+    focusLayoutConstraints.minFocusPaneWidth,
+    layoutWidth - focusLayoutConstraints.minCenterWidth - focusLayoutConstraints.resizerWidth,
   );
+  const effectiveSessionSidebarCollapsed = sessionSidebarCollapsed || sessionSidebarAutoCollapsed;
+  const toggleSessionSidebar = useCallback(() => {
+    // Toggling always means "the opposite of what is shown now"; clear the
+    // auto state so a manual expand while narrow is not immediately undone.
+    setSessionSidebarAutoCollapsed(false);
+    setSessionSidebarCollapsed(!effectiveSessionSidebarCollapsed);
+  }, [effectiveSessionSidebarCollapsed]);
   const modeBlockedMessage = modeSendBlocked
     ? formatI18n(translate('input.modeNotReady'), { remaining: missingModeProviderCount })
     : undefined;
@@ -1919,7 +1956,7 @@ export default function App() {
       <div
         ref={gridRef}
         className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)]"
-        style={{ gridTemplateColumns: messagesMaximized ? '0px 0px minmax(0,1fr)' : focusGridTemplateColumns(focusPaneWidth) }}
+        style={{ gridTemplateColumns: messagesMaximized ? '0px 0px minmax(0,1fr)' : focusGridTemplateColumns(focusPaneWidth, focusLayoutConstraints) }}
       >
         <div
           aria-hidden={messagesMaximized || undefined}
@@ -1928,7 +1965,7 @@ export default function App() {
           }`}
         >
           <ConversationSidebar
-            collapsed={sessionSidebarCollapsed}
+            collapsed={effectiveSessionSidebarCollapsed}
             sessions={sessions}
             activeSessionId={activeSessionId}
             disabled={isProcessing}
@@ -1941,7 +1978,7 @@ export default function App() {
               deleteConversation: translate('conversation.delete'),
               confirmDeleteConversation: translate('conversation.deleteConfirm'),
             }}
-            onToggle={() => setSessionSidebarCollapsed((current) => !current)}
+            onToggle={toggleSessionSidebar}
             onNewConversation={startNewConversation}
             onSelectSession={selectConversationSession}
             onDeleteSession={deleteConversationSession}
@@ -2041,7 +2078,7 @@ export default function App() {
             label={translate('layout.resizeFocusPane')}
             onDrag={dragFocusPane}
             value={focusPaneWidth}
-            min={DEFAULT_FOCUS_LAYOUT_CONSTRAINTS.minFocusPaneWidth}
+            min={focusLayoutConstraints.minFocusPaneWidth}
             max={focusPaneMaxWidth}
           />
         </div>
@@ -2260,25 +2297,46 @@ export const ChatMessage = memo(function ChatMessage({
   const isProvider = typeof p === 'string' && p in AI_PROVIDERS;
   const statusLabel =
     message.role === 'ai' && !message.final ? translateKey(thinking ? 'chat.thinking' : 'chat.streaming', locale) : '';
+  // Messages saved before v1.9.15 have no timestamp; show one only when present.
+  const createdAt = typeof message.createdAt === 'number' ? message.createdAt : undefined;
+  const timeLabel =
+    createdAt !== undefined
+      ? new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(createdAt)
+      : undefined;
+  const timeTitle =
+    createdAt !== undefined
+      ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(createdAt)
+      : undefined;
 
   return (
     <article
-      className="ai-sister-message border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3"
+      className="ai-sister-message group border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3"
       data-provider={isProvider ? p : undefined}
     >
       <div className="mb-1 flex items-center gap-2">
         {isProvider ? <AiSisterAvatar provider={p as AIProvider} active={thinking} size="md" /> : null}
-        <div className="text-xs uppercase text-zinc-500 dark:text-zinc-500">
+        <div className="min-w-0 flex-1 truncate text-xs uppercase text-zinc-500 dark:text-zinc-500">
           {bubbleAuthorLabel(message)}
           {message.modeRole ? ` · ${message.modeRole}` : ''}
           {statusLabel ? ` ${statusLabel}` : ''}
         </div>
+        {createdAt !== undefined ? (
+          <time className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500" dateTime={new Date(createdAt).toISOString()} title={timeTitle}>
+            {timeLabel}
+          </time>
+        ) : null}
+        <CopyButton
+          text={message.content}
+          label={translateKey('chat.copy', locale)}
+          copiedLabel={translateKey('chat.copied', locale)}
+          className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
+        />
       </div>
       {thinking ? (
         <div className="whitespace-pre-wrap text-sm italic text-zinc-500 dark:text-zinc-500">{translateKey('chat.thinking', locale)}</div>
       ) : (
         <div className="text-sm">
-          <MarkdownText text={message.content} />
+          <MarkdownText text={message.content} locale={locale} />
         </div>
       )}
       {message.truncated ? <div className="mt-2 text-xs text-amber-700 dark:text-amber-300">{translateKey('chat.truncated', locale)}</div> : null}

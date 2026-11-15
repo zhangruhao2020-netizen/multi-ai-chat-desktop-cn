@@ -5,6 +5,7 @@ import { AI_PROVIDERS } from '../../shared/constants';
 import type { AIProvider, ProviderState } from '../../shared/types';
 import { t } from '../i18n/t';
 import { DiagnosticsSection } from '../ui/SettingsModal';
+import { Button } from '../ui/Button';
 import { normalizeSettings } from '../ui/settingsModel';
 
 vi.mock('../host', () => ({
@@ -27,7 +28,8 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 type Props = { children?: ReactNode; disabled?: boolean; onClick?: () => void; onChange?: (event: { target: { value: string } }) => void };
 function find(node: ReactNode, type: string, label?: string): ReactElement<Props> | undefined {
   if (!isValidElement<Props>(node)) return undefined;
-  if (node.type === type && (label === undefined || node.props.children === label)) return node;
+  const isButton = type === 'button' && (node.type === 'button' || node.type === Button);
+  if ((node.type === type || isButton) && (label === undefined || node.props.children === label)) return node;
   for (const child of Children.toArray(node.props.children)) {
     const found = find(child, type, label);
     if (found) return found;

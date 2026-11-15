@@ -85,7 +85,7 @@ export function ProcessTrace({
             </button>
           </div>
           <div className="mt-4 text-sm text-zinc-800 dark:text-zinc-200">
-            <MarkdownText text={detailStep.content} />
+            <MarkdownText text={detailStep.content} locale={locale} />
           </div>
         </ModalDialog>
       ) : null}

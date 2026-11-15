@@ -4,6 +4,7 @@ import type { Locale } from '../i18n/resolve';
 import { t } from '../i18n/t';
 import type { PendingCheckpoint } from '../workflow/checkpoint';
 import { resolveCheckpoint } from '../workflow/checkpoint';
+import { Button } from './Button';
 
 export function CheckpointCard({
   checkpoint,
@@ -36,16 +37,11 @@ export function CheckpointCard({
           </div>
         </div>
         <div className="flex gap-2">
-          <button
-            type="button"
-            className="border border-zinc-400 dark:border-zinc-600 px-3 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'skip' })}
-          >
+          <Button variant="ghost" onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'skip' })}>
             {t('checkpoint.skip', locale)}
-          </button>
-          <button
-            type="button"
-            className="border border-sky-300 dark:border-sky-700 px-3 py-1.5 text-xs text-sky-700 dark:text-sky-100 hover:bg-sky-100 dark:hover:bg-sky-950"
+          </Button>
+          <Button
+            variant="subtle"
             onClick={() => {
               try {
                 onNativeEdit?.(checkpoint.provider);
@@ -56,14 +52,10 @@ export function CheckpointCard({
             }}
           >
             {t('checkpoint.editInProvider', locale)}
-          </button>
-          <button
-            type="button"
-            className="border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-100 hover:bg-emerald-100 dark:hover:bg-emerald-900"
-            onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'confirm', draft })}
-          >
+          </Button>
+          <Button variant="primary" onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'confirm', draft })}>
             {t('checkpoint.confirm', locale)}
-          </button>
+          </Button>
         </div>
       </div>
       <textarea

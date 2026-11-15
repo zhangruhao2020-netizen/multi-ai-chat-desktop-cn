@@ -15,6 +15,7 @@ import { filesFromDataTransfer, isOsFileDrag, markFileDragCopy, preventFileDragD
 import { formatInsertedFilesPrompt, TEXT_FILE_EXTENSIONS, type FileLike } from './fileInsert';
 import type { Locale } from '../i18n/resolve';
 import { t } from '../i18n/t';
+import { Button } from './Button';
 
 export function InputBar({
   onSend,
@@ -203,19 +204,16 @@ export function InputBar({
           multiple
           onChange={handleFileChange}
         />
-        <button
-          type="button"
-          className="border border-zinc-300 dark:border-zinc-700 px-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={insertDisabled}
-        >
+        <Button variant="ghost" onClick={() => fileInputRef.current?.click()} disabled={insertDisabled}>
           {isReadingFile ? t('input.reading', locale) : t('input.insertFile', locale)}
-        </button>
+        </Button>
         {isProcessing ? (
-          <button type="button" className="border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950 px-3 text-sm text-red-800 dark:text-red-100 hover:bg-red-100 dark:hover:bg-red-900" onClick={onCancel}>
+          <Button variant="danger" onClick={onCancel}>
             {t('input.stop', locale)}
-          </button>
+          </Button>
         ) : null}
+        {/* The send button keeps its solid emerald CTA style on purpose; it is
+            the one primary action in the composer and stays visually distinct. */}
         <button
           type="button"
           className="border border-emerald-300 dark:border-emerald-700 bg-emerald-600 text-white dark:bg-emerald-900 dark:text-zinc-100 px-4 text-sm hover:bg-emerald-700 dark:hover:bg-emerald-800 disabled:border-zinc-300 dark:disabled:border-zinc-700 disabled:bg-zinc-100 dark:disabled:bg-zinc-900 disabled:text-zinc-400 dark:disabled:text-zinc-600"
