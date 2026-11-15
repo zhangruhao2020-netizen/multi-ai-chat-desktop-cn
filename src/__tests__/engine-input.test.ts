@@ -960,6 +960,51 @@ describe('injected engine input hardening', () => {
     expect(errorDone(env)).toBeUndefined();
   });
 
+  it('reports Doubao logged in for a usable contenteditable composer and sends through it', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'contenteditable' });
+    const editor = env.input;
+    editor.setAttribute('contenteditable', 'true');
+    const placeholder = new FakeElement(env.document, 'p', '发消息...');
+    editor.appendChild(placeholder);
+    env.document.body.appendChild(editor);
+    env.detectorElements.set('[contenteditable="true"]', [editor]);
+    env.detectorElements.set(
+      'button[aria-label="发送"]',
+      env.sendButton ? [env.sendButton] : [],
+    );
+    env.document.execCommandResult = true;
+    env.document.execCommandMutates = true;
+    const prompt = '请用豆包比较 **A** 与 `B`。';
+    let submitted = '';
+    if (env.sendButton) {
+      env.sendButton.onClick = () => {
+        submitted = editor.textContent ?? '';
+        editor.setVisibleText('');
+      };
+    }
+    const handler = await installEngine(env);
+    dispatchAdapter(handler, bundledDoubaoAdapter());
+
+    expect(env.emitted.at(-1)).toEqual({
+      v: 1,
+      action: 'STATUS_REPORT',
+      provider: 'doubao',
+      payload: { dom: 'ready', login: 'logged_in', thinking: false, bootId: 'boot1' },
+    });
+
+    send(handler, prompt, 'doubao');
+    await flushMicrotasks();
+
+    expect(editor.textContent).toBe(prompt);
+
+    await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
+
+    expect(submitted).toBe(prompt);
+    expect(env.sendButton?.clickCount).toBe(1);
+    expect(errorDone(env)).toBeUndefined();
+  });
+
   it('clicks Meta AI stop when the host stops the provider', async () => {
     vi.useFakeTimers();
     const env = createEnv({ inputKind: 'input' });

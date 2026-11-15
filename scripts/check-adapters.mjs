@@ -174,7 +174,7 @@ const expected = {
   },
   doubao: {
     schemaVersion: 2,
-    adapterVersion: 1,
+    adapterVersion: 2,
     urls: {
       app: 'https://www.doubao.com/chat',
       login: 'https://www.doubao.com/chat',
@@ -184,15 +184,15 @@ const expected = {
     doneDelayMs: 5000,
     chunkDebounceMs: 600,
     inputSelectors: [
-      'textarea[placeholder="有什么我能帮你的吗？"]',
-      'textarea[placeholder]',
+      '[contenteditable="true"]',
+      '[role="textbox"]',
       'textarea',
     ],
     sendButtonSelectors: ['button[aria-label="发送"]', 'button[aria-label="Send"]', 'button[type="submit"]'],
     responseSelectors: ['[data-testid="assistant-message"]', '.message-bubble.assistant', '[class*="markdown"]'],
     loginDetectors: [
-      'textarea[placeholder="有什么我能帮你的吗？"]',
-      'textarea[placeholder]',
+      '[contenteditable="true"]',
+      '[role="textbox"]',
       'textarea',
       'button[aria-label="发送"]',
     ],
@@ -340,18 +340,21 @@ assertEqual(
 
 // Doubao web surface stays on www.doubao.com/chat; login is a modal on the
 // chat page, so login is the app URL and no SSO host was observed to bundle.
-// The logged-out region-ban page (observed 2026-11-14 from outside mainland
-// China) is what the loggedOutDetectors recognize; the composer placeholder
-// is the one public write-ups quote, and the send/response selectors are
-// generic fallbacks, none of them verified against a signed-in session.
+// Read-only inspection of the logged-out page on 2026-11-15 showed the
+// composer is a contenteditable rich-text editor (placeholder paragraph
+// '发消息...'), not a textarea, so input detection is contenteditable-first
+// with textarea kept only as a last fallback. The send button does not exist
+// in the empty state and no assistant bubble is observable from an empty
+// chat, so send/response selectors stay generic fallbacks, none of them
+// verified against a signed-in session.
 const doubaoAdapter = JSON.parse(await readFile(path.join(adapterDir, 'doubao.json'), 'utf8'));
 assertEqual(doubaoAdapter.urls.match, ['www.doubao.com/*', 'doubao.com/*'], 'doubao.initialSeed.appScopes');
 assertEqual(doubaoAdapter.urls.ssoMatch, undefined, 'doubao.initialSeed.ssoScopes');
 assertEqual(
   doubaoAdapter.inputSelectors,
   [
-    'textarea[placeholder="有什么我能帮你的吗？"]',
-    'textarea[placeholder]',
+    '[contenteditable="true"]',
+    '[role="textbox"]',
     'textarea',
   ],
   'doubao.initialSeed.inputSelectors',

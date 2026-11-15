@@ -1155,7 +1155,7 @@ mod tests {
     fn doubao_initial_seed_is_registered_and_keeps_navigation_narrow() {
         let doubao = adapters().get("doubao").expect("Doubao adapter is bundled");
         assert_eq!(doubao.display_name, "Doubao");
-        assert_eq!(doubao.adapter_version, 1);
+        assert_eq!(doubao.adapter_version, 2);
         assert_eq!(doubao.schema_version, 2);
         assert_eq!(doubao.urls.app, "https://www.doubao.com/chat");
         assert_eq!(doubao.urls.login, "https://www.doubao.com/chat");

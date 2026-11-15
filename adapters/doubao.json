@@ -1,7 +1,7 @@
 {
   "$schema": "./schema.json",
   "schemaVersion": 2,
-  "adapterVersion": 1,
+  "adapterVersion": 2,
   "provider": "doubao",
   "displayName": "Doubao",
   "urls": {
@@ -13,8 +13,8 @@
     ]
   },
   "inputSelectors": [
-    "textarea[placeholder=\"有什么我能帮你的吗？\"]",
-    "textarea[placeholder]",
+    "[contenteditable=\"true\"]",
+    "[role=\"textbox\"]",
     "textarea"
   ],
   "sendButtonSelectors": [
@@ -28,8 +28,8 @@
     "[class*=\"markdown\"]"
   ],
   "loginDetectors": [
-    "textarea[placeholder=\"有什么我能帮你的吗？\"]",
-    "textarea[placeholder]",
+    "[contenteditable=\"true\"]",
+    "[role=\"textbox\"]",
     "textarea",
     "button[aria-label=\"发送\"]"
   ],
