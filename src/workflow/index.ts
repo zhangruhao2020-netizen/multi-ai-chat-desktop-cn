@@ -1,4 +1,4 @@
-import type { AIProvider, ChatMode, ModeRoles, WorkflowPresetId } from '../../shared/types';
+import type { AIProvider, ChatMode, ModeRoles, ProviderModels, WorkflowPresetId } from '../../shared/types';
 import { AI_PROVIDERS, CHAT_MODES, DEFAULT_FREE_TARGET_PROVIDERS } from '../../shared/constants';
 import { getRuntimeAppVersion } from '../appVersion';
 import { host } from '../host';
@@ -30,6 +30,7 @@ export interface RunWorkflowParams {
   snapshotPersistence?: boolean;
   snapshotRedactionTier?: SnapshotRedactionTier;
   responseLanguagePolicy?: ResponseLanguagePolicy;
+  providerModels?: ProviderModels;
 }
 
 export type RunWorkflowResult = { ok: true } | { ok: false; preflight: PreflightResult };
@@ -64,6 +65,7 @@ async function runPreparedWorkflow({
   snapshotPersistence,
   snapshotRedactionTier,
   responseLanguagePolicy,
+  providerModels,
 }: RunWorkflowParams): Promise<RunWorkflowResult> {
   const snapshotOptions = {
     enabled: snapshotPersistence,
@@ -81,7 +83,7 @@ async function runPreparedWorkflow({
       const preflight = await preflightGraph(graph, roles, activeProviders);
       if (!preflight.ok) return { ok: false, preflight };
 
-      await executeGraph(graph, { text, context, roles, checkpoints, locale, responseLanguagePolicy }, graphOptions);
+      await executeGraph(graph, { text, context, roles, checkpoints, locale, responseLanguagePolicy, providerModels }, graphOptions);
       return { ok: true };
     }
 
@@ -95,7 +97,7 @@ async function runPreparedWorkflow({
           : targets.filter((provider) => sendable.includes(provider) && active.includes(provider));
       await executeGraph(
         workflowGraphs.free,
-        { text, context, targets: targetSet, checkpoints, locale, responseLanguagePolicy },
+        { text, context, targets: targetSet, checkpoints, locale, responseLanguagePolicy, providerModels },
         graphOptions,
       );
       return { ok: true };
@@ -106,7 +108,7 @@ async function runPreparedWorkflow({
     const preflight = await preflightGraph(graph, roles, activeProviders);
     if (!preflight.ok) return { ok: false, preflight };
 
-    await executeGraph(graph, { text, context, roles, checkpoints, locale, responseLanguagePolicy }, graphOptions);
+    await executeGraph(graph, { text, context, roles, checkpoints, locale, responseLanguagePolicy, providerModels }, graphOptions);
 
     return { ok: true };
   } catch (error) {

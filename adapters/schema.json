@@ -108,6 +108,40 @@
     "sendStrategy": {
       "enum": ["click", "enter"]
     },
+    "modelPicker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["openSelectors", "currentLabelSelectors", "options"],
+      "properties": {
+        "openSelectors": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "currentLabelSelectors": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "options": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["selector", "labelIncludes"],
+            "properties": {
+              "selector": { "type": "string", "minLength": 1 },
+              "labelIncludes": { "type": "string", "minLength": 1 },
+              "labelExcludes": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
     "timing": {
       "type": "object",
       "additionalProperties": false,

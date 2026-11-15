@@ -4,6 +4,7 @@ import claudeAdapterSeed from '../../adapters/claude.json';
 import deepseekAdapterSeed from '../../adapters/deepseek.json';
 import doubaoAdapterSeed from '../../adapters/doubao.json';
 import grokAdapterSeed from '../../adapters/grok.json';
+import geminiAdapterSeed from '../../adapters/gemini.json';
 import type { AIProvider, BridgeMessage } from '../../shared/types';
 
 const PRE_SEND_DELAY_MS = 800;
@@ -52,6 +53,11 @@ interface TestAdapter {
   stopButtonSelectors?: string[];
   inputStrategy: InputStrategyName;
   sendStrategy?: SendStrategy;
+  modelPicker?: {
+    openSelectors: string[];
+    currentLabelSelectors: string[];
+    options: Record<string, { selector: string; labelIncludes: string; labelExcludes?: string[] }>;
+  };
   timing: {
     doneDelayMs: number;
     chunkDebounceMs: number;
@@ -1001,6 +1007,144 @@ describe('injected engine input hardening', () => {
     await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
 
     expect(submitted).toBe(prompt);
+    expect(env.sendButton?.clickCount).toBe(1);
+    expect(errorDone(env)).toBeUndefined();
+  });
+
+  // Gemini model picker: drives the page's own model switcher before the
+  // draft is staged, and never blocks the send when the picker is absent
+  // or redesigned.
+  function geminiModelPicker() {
+    return {
+      openSelectors: ['button.input-area-switch'],
+      currentLabelSelectors: ['.input-area-switch-label span'],
+      options: {
+        pro: { selector: '[data-test-id="bard-mode-option-pro"]', labelIncludes: 'Pro' },
+        fast: { selector: '[data-test-id="bard-mode-option-fast"]', labelIncludes: 'Flash', labelExcludes: ['Thinking'] },
+        thinking: { selector: '[data-test-id="bard-mode-option-thinking"]', labelIncludes: 'Thinking' },
+      },
+    };
+  }
+
+  function installModelPickerFixture(env: FakeDomEnv, initialLabel: string) {
+    const switchButton = new FakeElement(env.document, 'button');
+    const label = new FakeElement(env.document, 'span', initialLabel);
+    const options = new Map<string, FakeElement>();
+    for (const [key, modelLabel] of [
+      ['pro', '2.5 Pro'],
+      ['fast', '2.5 Flash'],
+      ['thinking', '2.5 Flash Thinking'],
+    ] as const) {
+      const option = new FakeElement(env.document, 'div');
+      option.hidden = true;
+      option.onClick = () => {
+        label.textContent = modelLabel;
+        for (const other of options.values()) other.hidden = true;
+      };
+      options.set(key, option);
+      env.detectorElements.set(`[data-test-id="bard-mode-option-${key}"]`, [option]);
+    }
+    switchButton.onClick = () => {
+      for (const option of options.values()) option.hidden = false;
+    };
+    env.detectorElements.set('button.input-area-switch', [switchButton]);
+    env.detectorElements.set('.input-area-switch-label span', [label]);
+    return { switchButton, label, options };
+  }
+
+  function sendWithModel(handler: (message: BridgeMessage) => void, text: string, model: string) {
+    handler({ v: 1, action: 'SEND_MESSAGE', provider: 'gemini', payload: { text, model } });
+  }
+
+  it('bundled Gemini adapter declares the documented model picker', () => {
+    expect(geminiAdapterSeed.adapterVersion).toBe(3);
+    expect(geminiAdapterSeed.modelPicker).toEqual({
+      openSelectors: ['button.input-area-switch'],
+      currentLabelSelectors: ['.input-area-switch-label span'],
+      options: {
+        pro: { selector: '[data-test-id="bard-mode-option-pro"]', labelIncludes: 'Pro' },
+        fast: {
+          selector: '[data-test-id="bard-mode-option-fast"]',
+          labelIncludes: 'Flash',
+          labelExcludes: ['Thinking'],
+        },
+        thinking: { selector: '[data-test-id="bard-mode-option-thinking"]', labelIncludes: 'Thinking' },
+      },
+    });
+  });
+
+  it('switches Gemini to the chosen model before sending', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'contenteditable' });
+    const picker = installModelPickerFixture(env, '2.5 Flash');
+    let submitted = '';
+    if (env.sendButton) {
+      env.sendButton.onClick = () => {
+        submitted = env.input.textContent ?? '';
+        env.input.setVisibleText('');
+      };
+    }
+    const handler = await installEngine(env);
+    dispatchAdapter(handler, { provider: 'gemini', inputStrategy: 'quill-angular', modelPicker: geminiModelPicker() });
+
+    sendWithModel(handler, 'hello gemini', 'pro');
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(picker.switchButton.clickCount).toBe(1);
+    expect(picker.options.get('pro')?.clickCount).toBe(1);
+    expect(picker.options.get('fast')?.clickCount).toBe(0);
+    expect(picker.label.textContent).toBe('2.5 Pro');
+    expect(env.input.textContent).toBe('hello gemini');
+
+    await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
+
+    expect(submitted).toBe('hello gemini');
+    expect(env.sendButton?.clickCount).toBe(1);
+    expect(errorDone(env)).toBeUndefined();
+  });
+
+  it('skips the picker when the chosen model is already active', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'contenteditable' });
+    const picker = installModelPickerFixture(env, '2.5 Pro');
+    const handler = await installEngine(env);
+    dispatchAdapter(handler, { provider: 'gemini', inputStrategy: 'quill-angular', modelPicker: geminiModelPicker() });
+
+    sendWithModel(handler, 'hello gemini', 'pro');
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(picker.switchButton.clickCount).toBe(0);
+    expect(picker.options.get('pro')?.clickCount).toBe(0);
+    expect(env.input.textContent).toBe('hello gemini');
+    expect(errorDone(env)).toBeUndefined();
+  });
+
+  it('still sends when the model picker is missing', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'contenteditable' });
+    let submitted = '';
+    if (env.sendButton) {
+      env.sendButton.onClick = () => {
+        submitted = env.input.textContent ?? '';
+        env.input.setVisibleText('');
+      };
+    }
+    const handler = await installEngine(env);
+    // No modelPicker on the adapter: a stale or hand-edited setting must
+    // never wedge the send.
+    dispatchAdapter(handler, { provider: 'gemini', inputStrategy: 'quill-angular' });
+
+    sendWithModel(handler, 'hello gemini', 'pro');
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // The send click lands ~800ms after staging and clears the composer,
+    // so the staged text is only visible before that.
+    expect(env.input.textContent).toBe('hello gemini');
+
+    await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
+
+    expect(submitted).toBe('hello gemini');
     expect(env.sendButton?.clickCount).toBe(1);
     expect(errorDone(env)).toBeUndefined();
   });

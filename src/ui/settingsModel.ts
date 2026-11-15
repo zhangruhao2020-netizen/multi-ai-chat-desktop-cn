@@ -1,4 +1,4 @@
-import type { AIProvider } from '../../shared/types';
+import type { AIProvider, ProviderModels } from '../../shared/types';
 import { AI_PROVIDERS, ALL_AI_PROVIDERS, DEFAULT_STANDBY_PROVIDER } from '../../shared/constants';
 import { DEFAULT_COLUMN_WIDTHS, type ColumnWidths, clampColumnWidths } from './dockLayout';
 import { DEFAULT_FOCUS_PANE_WIDTH, clampFocusPaneWidth } from './focusLayout';
@@ -16,6 +16,7 @@ import {
 } from './modeRoleAssignment';
 import { isSnapshotRedactionTier, type SnapshotRedactionTier } from '../workflow/snapshot/types';
 import { defaultPresentation, normalizePresentation, type PresentationByProvider } from './presentation';
+import { normalizeProviderModels } from './providerModels';
 import {
   normalizeLanguageSetting,
   normalizeResponseLanguageSetting,
@@ -36,6 +37,7 @@ export interface AppSettings {
   modeRoles: ModeRoleAssignments;
   standbyProvider: AIProvider;
   openProviders: AIProvider[];
+  providerModels: ProviderModels;
   adapterBaseUrl: string;
   updaterChannel: string;
   portable: boolean;
@@ -73,6 +75,7 @@ export function defaultSettings(): AppSettings {
     modeRoles: normalizeModeRoleAssignments(undefined),
     standbyProvider: DEFAULT_STANDBY_PROVIDER,
     openProviders: [],
+    providerModels: {},
     adapterBaseUrl: '',
     updaterChannel: 'stable',
     portable: false,
@@ -169,6 +172,7 @@ export function normalizeSettings(value: unknown): AppSettings {
     modeRoles: keepModeRolesWithinProviders(normalizedModeRoles, activeProviders),
     standbyProvider: normalizedStandbyProvider,
     openProviders: Array.from(new Set(providerList(input.openProviders))).filter((provider) => provider !== normalizedStandbyProvider),
+    providerModels: normalizeProviderModels(input.providerModels),
     adapterBaseUrl: stringValue(input.adapterBaseUrl, defaults.adapterBaseUrl),
     updaterChannel: stringValue(input.updaterChannel, defaults.updaterChannel),
     portable: input.portable === true,

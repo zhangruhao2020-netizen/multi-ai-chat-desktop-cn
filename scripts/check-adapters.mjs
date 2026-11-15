@@ -52,7 +52,7 @@ const expected = {
   },
   gemini: {
     schemaVersion: 1,
-    adapterVersion: 2,
+    adapterVersion: 3,
     urls: {
       app: 'https://gemini.google.com/app',
       login: 'https://gemini.google.com/app',

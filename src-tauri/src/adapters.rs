@@ -51,7 +51,27 @@ pub struct Adapter {
     pub input_strategy: String,
     #[serde(rename = "sendStrategy")]
     pub send_strategy: String,
+    #[serde(rename = "modelPicker", default)]
+    pub model_picker: Option<ModelPicker>,
     pub timing: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ModelPicker {
+    #[serde(rename = "openSelectors")]
+    pub open_selectors: Vec<String>,
+    #[serde(rename = "currentLabelSelectors")]
+    pub current_label_selectors: Vec<String>,
+    pub options: std::collections::HashMap<String, ModelPickerOption>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ModelPickerOption {
+    pub selector: String,
+    #[serde(rename = "labelIncludes")]
+    pub label_includes: String,
+    #[serde(rename = "labelExcludes", default)]
+    pub label_excludes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -282,6 +302,39 @@ pub(crate) fn validate_adapter(adapter: &Adapter) -> Result<(), String> {
     }
     if !matches!(adapter.send_strategy.as_str(), "click" | "enter") {
         return Err("invalid sendStrategy".into());
+    }
+    if let Some(picker) = &adapter.model_picker {
+        for (name, values) in [
+            ("modelPicker.openSelectors", &picker.open_selectors),
+            ("modelPicker.currentLabelSelectors", &picker.current_label_selectors),
+        ] {
+            if values.is_empty() {
+                return Err(format!("{name} must be non-empty"));
+            }
+            if values.iter().any(|value| value.trim().is_empty()) {
+                return Err(format!("{name} entries must be non-empty"));
+            }
+        }
+        if picker.options.is_empty() {
+            return Err("modelPicker.options must be non-empty".into());
+        }
+        for (key, option) in &picker.options {
+            if option.selector.trim().is_empty() {
+                return Err(format!("modelPicker.options.{key}.selector must be non-empty"));
+            }
+            if option.label_includes.trim().is_empty() {
+                return Err(format!("modelPicker.options.{key}.labelIncludes must be non-empty"));
+            }
+            if option
+                .label_excludes
+                .iter()
+                .any(|value| value.trim().is_empty())
+            {
+                return Err(format!(
+                    "modelPicker.options.{key}.labelExcludes entries must be non-empty"
+                ));
+            }
+        }
     }
     for (name, value) in [
         ("urls.app", adapter.urls.app.as_str()),
@@ -1189,6 +1242,32 @@ mod tests {
             let url = tauri::Url::parse(value).unwrap();
             assert!(!url_allowed_for_provider("doubao", &url).unwrap(), "{value}");
         }
+    }
+
+    #[test]
+    fn gemini_model_picker_is_registered() {
+        let gemini = adapters().get("gemini").expect("Gemini adapter is bundled");
+        assert_eq!(gemini.adapter_version, 3);
+        let picker = gemini
+            .model_picker
+            .as_ref()
+            .expect("Gemini adapter declares a model picker");
+        assert!(!picker.open_selectors.is_empty());
+        assert!(!picker.current_label_selectors.is_empty());
+        for key in ["pro", "fast", "thinking"] {
+            let option = picker.options.get(key).unwrap_or_else(|| panic!("model picker lacks {key}"));
+            assert!(!option.selector.trim().is_empty());
+            assert!(!option.label_includes.trim().is_empty());
+        }
+        // "2.5 Flash Thinking" contains "Flash", so the fast option must
+        // exclude it or the picker could never tell the two apart.
+        assert!(picker
+            .options
+            .get("fast")
+            .unwrap()
+            .label_excludes
+            .iter()
+            .any(|value| value == "Thinking"));
     }
 
     #[test]

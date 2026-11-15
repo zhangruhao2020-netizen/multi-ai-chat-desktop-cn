@@ -237,6 +237,10 @@ export const ja: Record<I18nKey, string> = {
   'settings.providersSelect': '予備のAI',
   'settings.providerActive': '有効',
   'settings.providerStandby': '予備',
+  'settings.geminiModel': 'Gemini モデル',
+  'settings.geminiModelDescription':
+    '送信前に Gemini 内蔵のモデル切替でモデルを切り替えます。Gemini の改版で切替が使えなくなった場合は設定を無視し、現在のモデルを使います。',
+  'settings.geminiModelDefault': 'Gemini の現在のモデルを使う',
   'settings.modeRoles': 'コラボレーションの役割',
   'settings.modeRolesDescription':
     '組み込みの構造化プリセットでは、現在有効な 4 つの AI を各 1 役に割り当てます。役割はカスタマイズでき、直列の役割では同じ AI を再利用できますが、同時に実行される役割（例：コンサルの最初の回答者 2 名）は重複させないでください。',

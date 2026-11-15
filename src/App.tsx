@@ -1515,6 +1515,7 @@ export default function App() {
         snapshotPersistence: snapshotSettings.snapshotPersistence,
         snapshotRedactionTier: snapshotSettings.snapshotRedactionTier,
         responseLanguagePolicy: createResponseLanguagePolicy(snapshotSettings.responseLanguage, localeRef.current),
+        providerModels: snapshotSettings.providerModels,
       });
       if (workflowExecutionGeneration !== workflowExecutionGenerationRef.current) return;
       const blockedPreflight = preflightFromResult(mode, result, presetId);

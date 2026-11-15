@@ -225,6 +225,10 @@ export const zhTW: Record<I18nKey, string> = {
   'settings.providersSelect': '備用 AI',
   'settings.providerActive': '已啟用',
   'settings.providerStandby': '備用',
+  'settings.geminiModel': 'Gemini 模型',
+  'settings.geminiModelDescription':
+    '傳送前在 Gemini 自帶的模型切換器裡切換模型。如果 Gemini 改版導致切換器失效，將忽略此設定並使用目前模型。',
+  'settings.geminiModelDefault': '使用 Gemini 目前模型',
   'settings.modeRoles': '協作角色',
   'settings.modeRolesDescription':
     '內建結構化預設會讓目前啟用的四家 AI 各擔任一個角色。你仍可自訂角色；依序執行的角色可重複使用同一家，只有同時執行的角色（例如諮詢的前兩位回答者）必須各不相同。',

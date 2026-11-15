@@ -11,7 +11,12 @@ export function reserveProviderTurn(provider: AIProvider): number {
   return reserveTurn(provider);
 }
 
-export async function sendAndWait(provider: AIProvider, text: string, reservedTurn?: number): Promise<{ response: string; turn: number }> {
+export async function sendAndWait(
+  provider: AIProvider,
+  text: string,
+  reservedTurn?: number,
+  model?: string,
+): Promise<{ response: string; turn: number }> {
   const turn = reservedTurn ?? reserveTurn(provider);
   const responsePromise = waitForResponse(provider, turn);
   activateTurn(provider, turn);
@@ -19,7 +24,7 @@ export async function sendAndWait(provider: AIProvider, text: string, reservedTu
   markInFlight(provider);
   try {
     recordEventLog(eventFromProviderSend(provider, text));
-    await host.provider.send(provider, text);
+    await host.provider.send(provider, text, model);
   } catch (error) {
     rejectWaiter(provider, turn, error instanceof Error ? error : new Error(String(error)));
     clearInFlight(provider);

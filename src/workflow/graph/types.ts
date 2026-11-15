@@ -1,4 +1,4 @@
-import type { AIProvider, ChatMode, ModeRoles } from '../../../shared/types';
+import type { AIProvider, ChatMode, ModeRoles, ProviderModels } from '../../../shared/types';
 import type { Locale } from '../../i18n/resolve';
 import type { ResponseLanguagePolicy } from '../responseLanguage';
 
@@ -158,6 +158,7 @@ export interface ExecuteGraphParams {
   checkpoints?: boolean;
   locale?: Locale;
   responseLanguagePolicy?: ResponseLanguagePolicy;
+  providerModels?: ProviderModels;
 }
 
 export interface StepOutput {

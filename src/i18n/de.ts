@@ -237,6 +237,10 @@ export const de: Record<I18nKey, string> = {
   'settings.providersSelect': 'Anbieter in Reserve',
   'settings.providerActive': 'Aktiv',
   'settings.providerStandby': 'Reserve',
+  'settings.geminiModel': 'Gemini-Modell',
+  'settings.geminiModelDescription':
+    'Wechselt das Modell vor dem Senden in Geminis eigenem Modellwähler. Wenn Gemini diesen Wähler umbaut, wird die Einstellung ignoriert und das aktuelle Modell verwendet.',
+  'settings.geminiModelDefault': 'Aktuelles Gemini-Modell verwenden',
   'settings.modeRoles': 'Kollaborationsrollen',
   'settings.modeRolesDescription':
     'Die integrierten strukturierten Presets weisen jeder der vier aktiven KIs genau eine Rolle zu. Rollen lassen sich anpassen: Serielle Rollen dürfen dieselbe KI wiederverwenden; gleichzeitig laufende Rollen, etwa die ersten beiden Antworten der Beratung, müssen unterschiedlich bleiben.',

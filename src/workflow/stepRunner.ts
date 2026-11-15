@@ -16,6 +16,7 @@ export const SEND_REJECTION_RETRY_DELAY_MS = 1_500;
 
 export interface RunStepOptions {
   recoverProviderErrors?: boolean;
+  model?: string;
 }
 
 function waitForSendRetry(): Promise<void> {
@@ -44,7 +45,7 @@ export async function runStep(
     checkAborted();
     emitCountdown(provider);
     try {
-      const result = await sendAndWait(provider, prompt, reservedTurn);
+      const result = await sendAndWait(provider, prompt, reservedTurn, options.model);
       const responseError = providerResponseError(provider, result.response);
       if (!responseError) return result;
       if (sendRejectionRetries === 0 && isRetryableSendRejection(responseError)) {

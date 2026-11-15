@@ -15,6 +15,21 @@ interface DetectorObject {
 type Detector = string | DetectorObject;
 type ChallengeMutationGuard = () => void;
 
+interface ModelPickerOption {
+  selector: string;
+  // Substring the picker's current-model label must contain after choosing
+  // this option (e.g. 'Pro' for 2.5 Pro). labelExcludes disambiguates
+  // overlapping names (2.5 Flash vs 2.5 Flash Thinking).
+  labelIncludes: string;
+  labelExcludes?: string[];
+}
+
+interface ModelPicker {
+  openSelectors: string[];
+  currentLabelSelectors: string[];
+  options: Record<string, ModelPickerOption>;
+}
+
 interface AdapterConfig {
   provider: AIProvider;
   adapterVersion: number;
@@ -27,6 +42,7 @@ interface AdapterConfig {
   stopButtonSelectors?: string[];
   inputStrategy: InputStrategyName;
   sendStrategy?: SendStrategy;
+  modelPicker?: ModelPicker;
   timing?: {
     doneDelayMs?: number;
     chunkDebounceMs?: number;
@@ -58,6 +74,8 @@ const SELECTOR_RETRY_INTERVAL_MS = 250;
 const INPUT_SELECTOR_TIMEOUT_MS = 2500;
 const SEND_BUTTON_SELECTOR_TIMEOUT_MS = 800;
 const PRE_SEND_DELAY_MS = 800;
+const MODEL_PICKER_OPTION_TIMEOUT_MS = 2_000;
+const MODEL_PICKER_SETTLE_MS = 300;
 const SEND_RETRY_DELAY_MS = 1500;
 const SEND_FINAL_VERIFY_DELAY_MS = 1500;
 const CHATGPT_INITIAL_SEND_CONFIRMATION_DELAY_MS = 10_000;
@@ -369,8 +387,8 @@ class InactiveSendOperationError extends Error {
       if (sendOperation === undefined) return;
       if (abortAutomationForChallenge(message.provider, true, 'send', sendOperation)) return;
       if (rejectSendWhileProviderGenerating(message.provider, sendOperation)) return;
-      const payload = message.payload as { text?: string } | undefined;
-      void sendMessage(payload?.text ?? '', message.provider, sendOperation);
+      const payload = message.payload as { text?: string; model?: string } | undefined;
+      void sendMessage(payload?.text ?? '', message.provider, sendOperation, payload?.model);
       return;
     }
     if (message.action === 'FILL_DRAFT' && (!adapter || !message.provider || message.provider === adapter.provider)) {
@@ -744,7 +762,69 @@ class InactiveSendOperationError extends Error {
     return { activeAdapter, input, injectionStartedAt };
   }
 
-  async function sendMessage(text: string, providerHint: AIProvider | undefined, sendOperation: number) {
+  // Drives the provider page's own model picker (when the installed adapter
+  // declares one and the user chose a model in Settings). The picker is a
+  // page element the provider can redesign at any time, so every failure
+  // here is soft: log it and send with whatever model is currently active
+  // rather than blocking the send.
+  async function ensureProviderModel(modelKey: string | undefined): Promise<void> {
+    if (!modelKey || !adapter?.modelPicker) return;
+    const picker = adapter.modelPicker;
+    const option = picker.options?.[modelKey];
+    if (!option) {
+      logEngine(`model picker: unknown model "${modelKey}" for ${adapter.provider}`);
+      return;
+    }
+    try {
+      const currentLabel = currentModelLabel(picker);
+      if (currentLabel && modelLabelMatches(currentLabel, option)) return;
+      const openButton = queryFirstVisible(picker.openSelectors);
+      if (!openButton) {
+        logEngine(`model picker: no model switcher found for ${adapter.provider}; keeping current model`);
+        return;
+      }
+      (openButton as HTMLElement).click();
+      const optionElement = await waitForVisibleElement(option.selector, MODEL_PICKER_OPTION_TIMEOUT_MS);
+      if (!optionElement) {
+        logEngine(`model picker: option "${modelKey}" did not appear for ${adapter.provider}; keeping current model`);
+        return;
+      }
+      (optionElement as HTMLElement).click();
+      await sleep(MODEL_PICKER_SETTLE_MS);
+      const nextLabel = currentModelLabel(picker);
+      if (nextLabel && !modelLabelMatches(nextLabel, option)) {
+        logEngine(`model picker: label still "${nextLabel}" after choosing "${modelKey}" for ${adapter.provider}`);
+      }
+    } catch (error) {
+      logEngine(`model picker: ${errorMessage(error)}; keeping current model`);
+    }
+  }
+
+  function currentModelLabel(picker: ModelPicker): string | undefined {
+    const labelElement = queryFirstVisible(picker.currentLabelSelectors);
+    return labelElement?.textContent?.trim() || undefined;
+  }
+
+  function modelLabelMatches(label: string, option: ModelPickerOption): boolean {
+    if (!label.includes(option.labelIncludes)) return false;
+    return !(option.labelExcludes ?? []).some((excluded) => label.includes(excluded));
+  }
+
+  async function waitForVisibleElement(selector: string, timeoutMs: number): Promise<Element | null> {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      const element = queryFirstVisible([selector]);
+      if (element) return element;
+      if (Date.now() >= deadline) return null;
+      await sleep(100);
+    }
+  }
+
+  async function sendMessage(text: string, providerHint: AIProvider | undefined, sendOperation: number, model?: string) {
+    // No await when there is nothing to switch: staging must start on the
+    // same microtask as before, or error-as-DONE and other post-send
+    // assertions that run right after dispatch would see a delayed send.
+    if (model && adapter?.modelPicker) await ensureProviderModel(model);
     const staged = await stageDraftForResponse(text, providerHint, true, sendOperation);
     if (!staged) return;
     if (!isActiveSendOperation(sendOperation)) return;

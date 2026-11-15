@@ -373,7 +373,7 @@ describe('workflow engine', () => {
     publishBridgeMessage(done('chatgpt', 'ok'));
     await expect(run).resolves.toEqual({ ok: true });
     expect(host.provider.send).toHaveBeenCalledTimes(1);
-    expect(host.provider.send).toHaveBeenCalledWith('chatgpt', 'q');
+    expect(host.provider.send).toHaveBeenCalledWith('chatgpt', 'q', undefined);
     expect(statuses).toEqual([`⚡ ${providerName('chatgpt')} answering in parallel…`, '']);
 
     vi.mocked(host.provider.send).mockClear();
@@ -382,6 +382,26 @@ describe('workflow engine', () => {
     unsubscribe();
     expect(host.provider.send).not.toHaveBeenCalled();
     expect(statuses).toEqual(['']);
+  });
+
+  it('passes the chosen provider model through to host.provider.send', async () => {
+    vi.mocked(host.provider.send).mockImplementation(async (provider) => {
+      publishBridgeMessage(done(provider, `${provider}-answer`));
+    });
+    await expect(
+      runWorkflow({ text: 'q', mode: 'free', targets: ['gemini'], providerModels: { gemini: 'pro' } }),
+    ).resolves.toEqual({ ok: true });
+    expect(host.provider.send).toHaveBeenCalledWith('gemini', 'q', 'pro');
+  });
+
+  it('sends without a model argument when no provider model is chosen', async () => {
+    vi.mocked(host.provider.send).mockImplementation(async (provider) => {
+      publishBridgeMessage(done(provider, `${provider}-answer`));
+    });
+    await expect(
+      runWorkflow({ text: 'q', mode: 'free', targets: ['gemini'], providerModels: {} }),
+    ).resolves.toEqual({ ok: true });
+    expect(host.provider.send).toHaveBeenCalledWith('gemini', 'q', undefined);
   });
 
   it('drops an explicitly selected standby provider even when stale state says it is sendable', async () => {
@@ -694,8 +714,8 @@ describe('workflow engine', () => {
     const step = runStep('chatgpt', 'retry prompt');
     await vi.waitFor(() => expect(host.provider.send).toHaveBeenCalledTimes(2));
     expect(host.provider.stop).toHaveBeenCalledWith('chatgpt');
-    expect(host.provider.send).toHaveBeenNthCalledWith(1, 'chatgpt', 'retry prompt');
-    expect(host.provider.send).toHaveBeenNthCalledWith(2, 'chatgpt', 'retry prompt');
+    expect(host.provider.send).toHaveBeenNthCalledWith(1, 'chatgpt', 'retry prompt', undefined);
+    expect(host.provider.send).toHaveBeenNthCalledWith(2, 'chatgpt', 'retry prompt', undefined);
     expect(vi.mocked(host.provider.stop).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(host.provider.send).mock.invocationCallOrder[1],
     );
@@ -1124,7 +1144,7 @@ describe('workflow engine', () => {
     await expect(run).resolves.toEqual({ ok: true });
 
     unsubscribeCheckpoint();
-    expect(host.provider.send).toHaveBeenNthCalledWith(1, DEFAULT_DEBATE_ROLES.pro, 'edited pro draft');
+    expect(host.provider.send).toHaveBeenNthCalledWith(1, DEFAULT_DEBATE_ROLES.pro, 'edited pro draft', undefined);
     expect(host.provider.fill).not.toHaveBeenCalled();
     expect(getLastSnapshot()?.humanEdits).toHaveLength(1);
     expect(getLastSnapshot()?.humanEdits[0]).toMatchObject({

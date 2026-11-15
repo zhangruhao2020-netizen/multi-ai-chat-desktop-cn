@@ -22,6 +22,7 @@ import {
   type ModeRoleAssignments,
 } from './modeRoleAssignment';
 import { compareVersions, fetchLatestRelease } from './updateCheck';
+import { GEMINI_MODEL_OPTIONS } from './providerModels';
 import { host } from '../host';
 import {
   filterEventLogByProvider,
@@ -520,6 +521,28 @@ export function SettingsModal({
                   {AI_PROVIDERS[draft.standbyProvider].name} · {t('settings.providerStandby')}
                 </span>
               </div>
+              {activeProvidersForStandby(draft.standbyProvider).includes('gemini') ? (
+                <label className="block text-xs text-zinc-600 dark:text-zinc-400">
+                  <span className="mb-1 block">{t('settings.geminiModel')}</span>
+                  <select
+                    value={draft.providerModels.gemini ?? ''}
+                    onChange={(event) =>
+                      updateDraft({
+                        providerModels: { ...draft.providerModels, gemini: event.target.value || undefined },
+                      })
+                    }
+                    className="w-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-sky-500 dark:focus:border-sky-600"
+                  >
+                    <option value="">{t('settings.geminiModelDefault')}</option>
+                    {GEMINI_MODEL_OPTIONS.map((option) => (
+                      <option key={option.key} value={option.key}>{option.label}</option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-xs leading-relaxed text-zinc-500 dark:text-zinc-500">
+                    {t('settings.geminiModelDescription')}
+                  </span>
+                </label>
+              ) : null}
             </section>
 
             <section className="space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-4">

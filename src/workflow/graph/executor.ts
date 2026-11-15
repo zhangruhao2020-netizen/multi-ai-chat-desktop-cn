@@ -1,5 +1,5 @@
 import { AI_PROVIDERS, CHAT_MODES } from '../../../shared/constants';
-import type { AIProvider, ChatMode } from '../../../shared/types';
+import type { AIProvider, ChatMode, ProviderModels } from '../../../shared/types';
 import type { Locale } from '../../i18n/resolve';
 import { formatI18n, t } from '../../i18n/t';
 import { abortWorkflow, checkAborted, getInFlightProviders } from '../cancel';
@@ -57,6 +57,7 @@ interface ExecutionContext {
   checkpoints: boolean;
   locale: Locale;
   responseLanguagePolicy?: ResponseLanguagePolicy;
+  providerModels: ProviderModels;
   completed: Set<NodeId>;
   ready: Set<NodeId>;
   evaluatedEdges: Set<number>;
@@ -171,6 +172,7 @@ function createExecutionContext(graph: WorkflowGraph, params: ExecuteGraphParams
     checkpoints: params.checkpoints === true,
     locale: params.locale ?? 'en',
     responseLanguagePolicy: params.responseLanguagePolicy,
+    providerModels: params.providerModels ?? {},
     completed: new Set(),
     ready: new Set(),
     evaluatedEdges: new Set(),
@@ -237,7 +239,7 @@ function prepareStepNode(
       run: async () => {
         const startedAt = snapshotTimestamp();
         let sendError: unknown;
-        const result = await sendAndWait(provider, prompt).catch((error: unknown) => {
+        const result = await sendAndWait(provider, prompt, undefined, context.providerModels[provider]).catch((error: unknown) => {
           sendError = error;
           return undefined;
         });
@@ -314,7 +316,10 @@ function prepareStepNode(
         const result =
           checkpointAction === 'native-edit'
             ? await fillAndAwaitNativeSend(provider, input, turn)
-            : await runStep(provider, input, turn, { recoverProviderErrors: context.graph.id === 'brainstorm' });
+            : await runStep(provider, input, turn, {
+                recoverProviderErrors: context.graph.id === 'brainstorm',
+                model: context.providerModels[provider],
+              });
         const responseError = providerResponseError(provider, result.response);
         if (responseError) throw responseError;
         recordStep({

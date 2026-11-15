@@ -3,6 +3,12 @@
 
 export type AIProvider = 'chatgpt' | 'claude' | 'deepseek' | 'doubao' | 'gemini' | 'grok' | 'meta';
 
+// Per-provider model choice, stored as an opaque model key per provider
+// (e.g. { gemini: 'pro' }). The key is resolved against the provider's own
+// in-page model picker by the injected engine; an absent key means "use
+// whatever model the provider page currently has selected".
+export type ProviderModels = Partial<Record<AIProvider, string>>;
+
 // Snapshot schema compatibility alias.
 export type AIProviderV2 = AIProvider;
 
