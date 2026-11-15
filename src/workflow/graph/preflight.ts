@@ -1,6 +1,7 @@
 import type { AIProvider, ModeRoles, ProviderState } from '../../../shared/types';
 import { host } from '../../host';
 import type { PreflightResult } from '../preflight';
+import { MIN_DISTINCT_READY_PROVIDERS, distinctReadyProviders } from '../preflight';
 import { isSendable } from '../sendability';
 import type { GraphNode, ProviderRef, RoleKey, WorkflowGraph } from './types';
 
@@ -33,7 +34,26 @@ export async function preflightGraph(
     ),
   ];
   const aliased = graph.preflight.aliasRules?.flatMap((rule) => aliasedProviders(resolved, rule.roles)) ?? [];
-  return { ok: unavailable.length === 0 && aliased.length === 0, unavailable, aliased };
+  // Roles may share a provider, but a serial mode still needs at least two
+  // different ready providers — otherwise the roles collapse onto one model
+  // and there is nobody to discuss with. Standby-inactive providers never
+  // count as ready here.
+  const readyProviders = distinctReadyProviders(
+    requiredRoles.map((role) => providerForRequiredRole(graph, resolved, role)),
+    new Map(
+      [...byProvider.entries()].filter(
+        ([provider]) => !isInactiveStandbyProvider(provider, activeProviders),
+      ),
+    ),
+  );
+  const tooFewProviders =
+    unavailable.length === 0 && aliased.length === 0 && readyProviders.size < MIN_DISTINCT_READY_PROVIDERS;
+  return {
+    ok: unavailable.length === 0 && aliased.length === 0 && !tooFewProviders,
+    unavailable,
+    aliased,
+    ...(tooFewProviders ? { tooFewProviders: true } : {}),
+  };
 }
 
 export function resolveGraphRoles(

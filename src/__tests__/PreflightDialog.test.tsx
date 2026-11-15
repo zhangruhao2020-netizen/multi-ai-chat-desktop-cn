@@ -172,6 +172,24 @@ describe('PreflightDialog login recovery', () => {
     expect(ui.onClose).not.toHaveBeenCalled();
   });
 
+  it('shows the two-provider hint with a Settings shortcut when roles collapse onto one provider', () => {
+    const onOpenLogin = vi.fn();
+    const onOpenSettings = vi.fn();
+    const ui = harness(onOpenLogin, {
+      onOpenSettings,
+      model: {
+        title: 'Cannot start debate',
+        unavailable: [],
+        aliased: [],
+        tooFewProviders: t('preflight.tooFewProviders', 'en'),
+      },
+    });
+    expect(ui.html()).toContain(t('preflight.tooFewProviders', 'en'));
+    ui.click(t('settings.title', 'en'));
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
+    expect(onOpenLogin).not.toHaveBeenCalled();
+  });
+
   it('treats an inactive lineup provider as standby even when the reason is login', () => {
     const onOpenLogin = vi.fn();
     const onOpenSettings = vi.fn();

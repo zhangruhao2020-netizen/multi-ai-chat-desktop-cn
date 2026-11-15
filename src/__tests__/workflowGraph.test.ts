@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AIProvider, BridgeMessage, ProviderState } from '../../shared/types';
+import type { AIProvider, BridgeMessage, DebateRoles, ProviderState } from '../../shared/types';
 import {
   AI_PROVIDERS,
   BRAINSTORM_ROUND_COUNT,
@@ -253,6 +253,29 @@ describe('workflow graph foundation', () => {
     await expect(preflightGraph(debateGraph, DEFAULT_DEBATE_ROLES)).resolves.toMatchObject({
       ok: false,
       unavailable: ['claude'],
+      aliased: [],
+    });
+  });
+
+  it('refuses a serial mode when all roles collapse onto one ready provider', async () => {
+    vi.mocked(host.connections.get).mockResolvedValue([state('gemini')]);
+    const oneModelRoles: DebateRoles = { ...DEFAULT_DEBATE_ROLES, pro: 'gemini', con: 'gemini', judge: 'gemini', summary: 'gemini' };
+
+    await expect(preflightGraph(debateGraph, oneModelRoles)).resolves.toMatchObject({
+      ok: false,
+      unavailable: [],
+      aliased: [],
+      tooFewProviders: true,
+    });
+  });
+
+  it('starts a serial mode when two ready providers cover all roles', async () => {
+    vi.mocked(host.connections.get).mockResolvedValue([state('gemini'), state('deepseek')]);
+    const twoModelRoles: DebateRoles = { ...DEFAULT_DEBATE_ROLES, pro: 'gemini', con: 'deepseek', judge: 'gemini', summary: 'deepseek' };
+
+    await expect(preflightGraph(debateGraph, twoModelRoles)).resolves.toMatchObject({
+      ok: true,
+      unavailable: [],
       aliased: [],
     });
   });

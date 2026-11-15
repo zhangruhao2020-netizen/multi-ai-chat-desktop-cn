@@ -12,7 +12,22 @@ export interface PreflightResult {
   ok: boolean;
   unavailable: AIProvider[];
   aliased: AIProvider[];
+  /**
+   * True when every role resolves to a ready provider but the roles
+   * collapse onto fewer than MIN_DISTINCT_READY_PROVIDERS distinct
+   * providers — a one-model "debate" is not a discussion. The dialog
+   * explains this instead of listing unavailable providers.
+   */
+  tooFewProviders?: boolean;
 }
+
+/**
+ * Serial modes (debate, consult, coding, roundtable, brainstorm) may reuse
+ * one provider across several roles — a two-AI debate is the intended
+ * small setup — but they still need at least two different ready
+ * providers, otherwise there is nobody to discuss with.
+ */
+export const MIN_DISTINCT_READY_PROVIDERS = 2;
 
 export async function preflightSerialMode(mode: Exclude<ChatMode, 'free'>, roles?: ModeRoles): Promise<PreflightResult> {
   // This is a t=0 start gate only; mid-run provider loss is handled by error-as-DONE and step timeout.
@@ -22,7 +37,24 @@ export async function preflightSerialMode(mode: Exclude<ChatMode, 'free'>, roles
   const roleProviders = Object.values(resolved) as AIProvider[];
   const unavailable = [...new Set(roleProviders.filter((provider) => !isSendable(byProvider.get(provider) ?? missingState(provider))))];
   const aliased = parallelAliases(mode, resolved);
-  return { ok: unavailable.length === 0 && aliased.length === 0, unavailable, aliased };
+  const readyCount = distinctReadyProviders(roleProviders, byProvider).size;
+  const tooFewProviders = unavailable.length === 0 && aliased.length === 0 && readyCount < MIN_DISTINCT_READY_PROVIDERS;
+  return {
+    ok: unavailable.length === 0 && aliased.length === 0 && !tooFewProviders,
+    unavailable,
+    aliased,
+    ...(tooFewProviders ? { tooFewProviders: true } : {}),
+  };
+}
+
+/** Distinct providers among the roles that are currently sendable. */
+export function distinctReadyProviders(
+  roleProviders: readonly AIProvider[],
+  byProvider: ReadonlyMap<AIProvider, ProviderState>,
+): Set<AIProvider> {
+  return new Set(
+    roleProviders.filter((provider) => isSendable(byProvider.get(provider) ?? missingState(provider))),
+  );
 }
 
 function missingState(provider: AIProvider): ProviderState {

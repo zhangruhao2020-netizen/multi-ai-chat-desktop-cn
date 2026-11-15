@@ -340,6 +340,8 @@ export const zhTW: Record<I18nKey, string> = {
   'replay.snapshotDeleted': 'Snapshot 已刪除。',
   'replay.sourceLastRun': '上次執行',
   'preflight.cannotStart': '無法開始 {mode} - 以下 providers 不可用：',
+  'preflight.cannotStartTooFew': '無法開始 {mode}——至少需要兩個不同的就緒模型',
+  'preflight.tooFewProviders': '只有一個就緒的模型承擔了全部角色。請在設定裡重新分配角色，讓兩個不同的就緒模型分擔席位。',
   'preflight.noWebview': '未開啟 webview',
   'preflight.needsLogin': '需要登入',
   'preflight.stale': '狀態過期',

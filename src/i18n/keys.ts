@@ -331,6 +331,8 @@ export const I18N_KEYS = [
   'replay.snapshotDeleted',
   'replay.sourceLastRun',
   'preflight.cannotStart',
+  'preflight.cannotStartTooFew',
+  'preflight.tooFewProviders',
   'preflight.noWebview',
   'preflight.needsLogin',
   'preflight.stale',

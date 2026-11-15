@@ -353,6 +353,8 @@ export const de: Record<I18nKey, string> = {
   'replay.snapshotDeleted': 'Snapshot gelöscht.',
   'replay.sourceLastRun': 'den letzten Lauf',
   'preflight.cannotStart': '{mode} kann nicht gestartet werden – folgende Anbieter sind nicht verfügbar:',
+  'preflight.cannotStartTooFew': '{mode} kann nicht gestartet werden – mindestens zwei verschiedene bereite Anbieter sind erforderlich',
+  'preflight.tooFewProviders': 'Nur ein bereiter Anbieter übernimmt alle Rollen. Weisen Sie die Rollen in den Einstellungen neu zu, damit zwei verschiedene bereite Anbieter die Plätze teilen.',
   'preflight.noWebview': 'Kein Webview',
   'preflight.needsLogin': 'Anmeldung erforderlich',
   'preflight.stale': 'Status veraltet',

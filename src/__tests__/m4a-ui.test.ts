@@ -153,6 +153,19 @@ describe('M4a UI helpers', () => {
     expect(model.aliased).toEqual([{ provider: 'chatgpt', label: 'ChatGPT', reason: t('preflight.aliasedProvider', 'en') }]);
   });
 
+  it('explains a one-provider serial mode through the two-provider hint', () => {
+    const model = buildPreflightDialogModel(
+      'debate',
+      { ok: false, unavailable: [], aliased: [], tooFewProviders: true },
+      states(),
+    );
+
+    expect(model.title).toBe(formatI18n(t('preflight.cannotStartTooFew', 'en'), { mode: modeName('debate', 'en') }));
+    expect(model.unavailable).toEqual([]);
+    expect(model.aliased).toEqual([]);
+    expect(model.tooFewProviders).toBe(t('preflight.tooFewProviders', 'en'));
+  });
+
   it('defaults free targets to six shipped sendable providers and toggles the selected send list', () => {
     const snapshot = states({ claude: state('claude', false) });
     expect(defaultTargets(snapshot, [...DEFAULT_FREE_TARGET_PROVIDERS])).toEqual(['chatgpt', 'deepseek', 'doubao', 'gemini', 'grok']);

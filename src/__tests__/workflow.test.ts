@@ -264,6 +264,20 @@ describe('workflow engine', () => {
     ).resolves.toMatchObject({ ok: false, aliased: ['chatgpt'] });
   });
 
+  it('refuses serial preflight when all roles collapse onto one ready provider', async () => {
+    vi.mocked(host.connections.get).mockResolvedValue([state('gemini')]);
+    await expect(
+      preflightSerialMode('debate', { pro: 'gemini', con: 'gemini', judge: 'gemini', summary: 'gemini' }),
+    ).resolves.toMatchObject({ ok: false, unavailable: [], aliased: [], tooFewProviders: true });
+  });
+
+  it('passes serial preflight when two ready providers cover all roles', async () => {
+    vi.mocked(host.connections.get).mockResolvedValue([state('gemini'), state('deepseek')]);
+    await expect(
+      preflightSerialMode('debate', { pro: 'gemini', con: 'deepseek', judge: 'gemini', summary: 'deepseek' }),
+    ).resolves.toMatchObject({ ok: true, unavailable: [], aliased: [] });
+  });
+
   it.each([
     { mode: 'debate' },
     { mode: 'consult' },

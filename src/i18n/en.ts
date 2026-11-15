@@ -351,6 +351,8 @@ export const en: Record<I18nKey, string> = {
   'replay.snapshotDeleted': 'Snapshot deleted.',
   'replay.sourceLastRun': 'the last run',
   'preflight.cannotStart': 'Cannot start {mode} - the following providers are unavailable:',
+  'preflight.cannotStartTooFew': 'Cannot start {mode} - needs at least two different ready providers',
+  'preflight.tooFewProviders': 'Only one ready provider covers the roles. Reassign roles in Settings so two different ready providers share the seats.',
   'preflight.noWebview': 'No webview',
   'preflight.needsLogin': 'Needs login',
   'preflight.stale': 'Stale',

@@ -103,6 +103,16 @@ export function PreflightDialog({
               <span className="text-zinc-600 dark:text-zinc-400"> - {item.reason}</span>
             </div>
           ))}
+          {model.tooFewProviders ? (
+            <div className="ui-panel flex items-center justify-between gap-3 p-2">
+              <span className="text-zinc-600 dark:text-zinc-400">{model.tooFewProviders}</span>
+              {onOpenSettings ? (
+                <Button variant="primary" size="sm" onClick={openSettings}>
+                  {t('settings.title', locale)}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         {loginErrorItem && !loginErrorIsStandby ? (
           <div role="alert" className="ui-banner-red mt-3 px-3 py-2 text-xs">

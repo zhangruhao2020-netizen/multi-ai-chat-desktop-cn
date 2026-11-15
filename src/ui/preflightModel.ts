@@ -10,6 +10,8 @@ export interface PreflightDialogModel {
   title: string;
   unavailable: { provider: AIProvider; label: string; reason: string }[];
   aliased: { provider: AIProvider; label: string; reason: string }[];
+  /** Shown when the only blocker is that fewer than two different ready providers cover the roles. */
+  tooFewProviders?: string;
 }
 
 export function providerUnavailableReason(state: ProviderState | undefined, locale: Locale = 'en'): string {
@@ -27,7 +29,9 @@ export function buildPreflightDialogModel(
 ): PreflightDialogModel {
   const displayName = mode === 'brainstorm' ? t('preset.brainstorm.displayName', locale) : modeName(mode, locale);
   return {
-    title: formatI18n(t('preflight.cannotStart', locale), { mode: displayName }),
+    title: preflight.tooFewProviders
+      ? formatI18n(t('preflight.cannotStartTooFew', locale), { mode: displayName })
+      : formatI18n(t('preflight.cannotStart', locale), { mode: displayName }),
     unavailable: preflight.unavailable.map((provider) => ({
       provider,
       label: AI_PROVIDERS[provider].name,
@@ -38,5 +42,6 @@ export function buildPreflightDialogModel(
       label: AI_PROVIDERS[provider].name,
       reason: t('preflight.aliasedProvider', locale),
     })),
+    ...(preflight.tooFewProviders ? { tooFewProviders: t('preflight.tooFewProviders', locale) } : {}),
   };
 }

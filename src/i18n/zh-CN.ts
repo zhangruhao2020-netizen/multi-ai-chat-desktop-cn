@@ -340,6 +340,8 @@ export const zhCN: Record<I18nKey, string> = {
   'replay.snapshotDeleted': 'Snapshot 已删除。',
   'replay.sourceLastRun': '上次运行',
   'preflight.cannotStart': '无法开始 {mode} - 以下 providers 不可用：',
+  'preflight.cannotStartTooFew': '无法开始 {mode}——至少需要两个不同的就绪模型',
+  'preflight.tooFewProviders': '只有一个就绪的模型承担了全部角色。请在设置里重新分配角色，让两个不同的就绪模型分担席位。',
   'preflight.noWebview': '未打开 webview',
   'preflight.needsLogin': '需要登录',
   'preflight.stale': '状态过期',

@@ -353,6 +353,8 @@ export const ja: Record<I18nKey, string> = {
   'replay.snapshotDeleted': 'スナップショットを削除しました。',
   'replay.sourceLastRun': '前回の実行',
   'preflight.cannotStart': '{mode}を開始できません。次のプロバイダーを利用できません：',
+  'preflight.cannotStartTooFew': '{mode}を開始できません——準備完了のプロバイダーが2つ以上必要です',
+  'preflight.tooFewProviders': '1つの準備完了プロバイダーだけがすべての役割を担っています。設定で役割を割り当て直し、2つの異なる準備完了プロバイダーで席を分担してください。',
   'preflight.noWebview': 'Webviewなし',
   'preflight.needsLogin': 'ログインが必要',
   'preflight.stale': '状態が古い',

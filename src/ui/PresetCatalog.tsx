@@ -1,9 +1,8 @@
 import type { AIProvider, ChatMode, ProviderState, WorkflowPresetId } from '../../shared/types';
-import { DEFAULT_FREE_TARGET_PROVIDERS } from '../../shared/constants';
-import { formatI18n, t } from '../i18n/t';
+import { t } from '../i18n/t';
 import type { Locale } from '../i18n/resolve';
-import { isSendable } from '../workflow/sendability';
-import { PRESET_CATALOG, defaultRolesForPreset, type PresetCatalogEntry } from './presetCatalogData';
+import { PRESET_CATALOG, type PresetCatalogEntry } from './presetCatalogData';
+import { presetReadiness } from './presetReadiness';
 import type { ModeRoleAssignments } from './modeRoleAssignment';
 
 export function PresetCatalog({
@@ -131,29 +130,4 @@ function renderPresetGrid({
       })}
     </div>
   );
-}
-
-function presetReadiness(
-  preset: PresetCatalogEntry,
-  states: Record<AIProvider, ProviderState>,
-  locale: Locale,
-  modeRoles?: ModeRoleAssignments,
-  activeProviders?: readonly AIProvider[],
-): { label: string; ready: boolean } {
-  const roles = defaultRolesForPreset(preset.graphId, preset.id, modeRoles);
-  const required = roles ? ([...new Set(Object.values(roles))] as AIProvider[]) : preset.requiredProviders;
-  if (required.length === 0) {
-    const providers = activeProviders ?? DEFAULT_FREE_TARGET_PROVIDERS;
-    const readyCount = providers.filter((provider) => isSendable(states[provider])).length;
-    return {
-      label: formatI18n(t('preset.readinessAny', locale), { ready: readyCount }),
-      ready: readyCount > 0,
-    };
-  }
-
-  const readyCount = required.filter((provider) => isSendable(states[provider])).length;
-  return {
-    label: formatI18n(t('preset.readinessRequired', locale), { ready: readyCount, total: required.length }),
-    ready: readyCount === required.length,
-  };
 }
