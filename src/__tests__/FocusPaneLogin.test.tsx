@@ -54,8 +54,9 @@ function harness(
   {
     provider = 'meta',
     login = 'logged_out',
+    loginDetail,
     stuckGrok = false,
-  }: { provider?: AIProvider; login?: ProviderState['login']; stuckGrok?: boolean } = {},
+  }: { provider?: AIProvider; login?: ProviderState['login']; loginDetail?: ProviderState['loginDetail']; stuckGrok?: boolean } = {},
 ) {
   // Retain the parent hooks across renders; child components use React's SSR hooks.
   let actionState: unknown;
@@ -75,6 +76,7 @@ function harness(
     thinking: false, lastStatusAt: 1, bridge: 'ok', adapter: 'ok',
   }])) as Record<AIProvider, ProviderState>;
   states[provider].login = login;
+  if (loginDetail) states[provider].loginDetail = loginDetail;
   if (stuckGrok) {
     states.grok = {
       provider: 'grok',
@@ -454,5 +456,31 @@ describe('FocusPane provider action failure recovery', () => {
     reject(new Error('late navigation rejection'));
     await expect(first).resolves.toBeUndefined();
     expect(renderToStaticMarkup(ui.render())).not.toContain('role="alert"');
+  });
+});
+
+describe('FocusPane login-guidance banner', () => {
+  it.each([
+    ['meta', 'Complete guest, email/mobile, or Facebook/Instagram sign-in in this window.'],
+    ['deepseek', 'Complete phone/email, Google, or Apple sign-in in this window.'],
+    ['doubao', 'Complete phone, Douyin, or Apple sign-in in this window.'],
+  ] as const)('shows the data-driven guidance for logged-out %s', (provider, guidance) => {
+    const ui = harness(undefined, { provider, login: 'logged_out' });
+    const html = renderToStaticMarkup(ui.render());
+    expect(html).toContain(guidance);
+  });
+
+  it('shows the region hint instead of the generic guidance when Doubao is region-restricted', () => {
+    const ui = harness(undefined, { provider: 'doubao', login: 'logged_out', loginDetail: 'region-restricted' });
+    const html = renderToStaticMarkup(ui.render());
+    expect(html).toContain('Doubao is unavailable in your region');
+    expect(html).not.toContain('Complete phone, Douyin, or Apple sign-in in this window.');
+  });
+
+  it('shows no login-guidance banner once the provider is logged in', () => {
+    const ui = harness(undefined, { provider: 'doubao', login: 'logged_in' });
+    const html = renderToStaticMarkup(ui.render());
+    expect(html).not.toContain('Complete phone, Douyin, or Apple sign-in in this window.');
+    expect(html).not.toContain('Doubao is unavailable in your region');
   });
 });

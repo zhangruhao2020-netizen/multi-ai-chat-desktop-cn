@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { AIProvider } from '../../shared/types';
+import { ALL_AI_PROVIDERS, DEFAULT_STANDBY_PROVIDER } from '../../shared/constants';
 import chatgptAvatarUrl from '../assets/themes/ai-sister/chatgpt.webp';
 import claudeAvatarUrl from '../assets/themes/ai-sister/claude.webp';
 import ensembleUrl from '../assets/themes/ai-sister/ensemble.jpg';
@@ -78,8 +79,12 @@ export function AiSisterBrandMark({ className = '' }: { className?: string }) {
   return <img src={ensembleUrl} alt="" draggable={false} className={`ai-sister-only ai-sister-brand-mark ${className}`} aria-hidden="true" />;
 }
 
-export function AiSisterEnsembleCard() {
+export function AiSisterEnsembleCard({ providers }: { providers?: AIProvider[] }) {
   const { t } = useI18n();
+  // Default to the active-provider list (everyone except the standby provider)
+  // so new providers show up here without another hard-coded avatar row.
+  const ensembleProviders =
+    providers ?? ALL_AI_PROVIDERS.filter((provider) => provider !== DEFAULT_STANDBY_PROVIDER);
 
   return (
     <section className="ai-sister-only ai-sister-ensemble-card" aria-label={t('theme.aiSister.title')}>
@@ -91,10 +96,9 @@ export function AiSisterEnsembleCard() {
         <div className="ai-sister-ensemble-title">{t('theme.aiSister.title')}</div>
         <p className="ai-sister-ensemble-subtitle">{t('theme.aiSister.subtitle')}</p>
         <div className="ai-sister-ensemble-avatars" aria-hidden="true">
-          <AiSisterAvatar provider="chatgpt" size="xs" />
-          <AiSisterAvatar provider="claude" size="xs" />
-          <AiSisterAvatar provider="gemini" size="xs" />
-          <AiSisterAvatar provider="grok" size="xs" />
+          {ensembleProviders.map((provider) => (
+            <AiSisterAvatar key={provider} provider={provider} size="xs" />
+          ))}
         </div>
       </div>
     </section>

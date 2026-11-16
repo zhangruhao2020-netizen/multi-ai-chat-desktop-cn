@@ -36,12 +36,13 @@ export function CheckpointCard({
             {t('checkpoint.step', locale)} {checkpoint.nodeId} · {providerName} · {source}
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'skip' })}>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" className="shrink-0 whitespace-nowrap" onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'skip' })}>
             {t('checkpoint.skip', locale)}
           </Button>
           <Button
             variant="subtle"
+            className="shrink-0 whitespace-nowrap"
             onClick={() => {
               try {
                 onNativeEdit?.(checkpoint.provider);
@@ -53,7 +54,7 @@ export function CheckpointCard({
           >
             {t('checkpoint.editInProvider', locale)}
           </Button>
-          <Button variant="primary" onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'confirm', draft })}>
+          <Button variant="primary" className="shrink-0 whitespace-nowrap" onClick={() => resolveCheckpoint(checkpoint.nodeId, { action: 'confirm', draft })}>
             {t('checkpoint.confirm', locale)}
           </Button>
         </div>

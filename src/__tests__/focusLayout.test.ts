@@ -16,7 +16,7 @@ import {
   throttleWithFrame,
 } from '../ui/focusLayout';
 import { applyPresentationTransitionCommand, waitForPresentationTargetBounds, type PresentationCommandHost } from '../ui/presentationCommands';
-import { DEFAULT_FONT_SIZE, MIN_FONT_SIZE, normalizeSettings } from '../ui/settingsModel';
+import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, normalizeSettings } from '../ui/settingsModel';
 
 function rect(width: number, height: number): DOMRectReadOnly {
   return { x: 10, y: 20, width, height, top: 20, left: 10, right: 10 + width, bottom: 20 + height, toJSON: () => ({}) };
@@ -183,10 +183,11 @@ describe('focus layout helpers', () => {
     expect(scheduleFrame).toHaveBeenCalledTimes(2);
   });
 
-  it('normalizes font size: configured minimum, no upper limit, invalid falls back to default', () => {
+  it('normalizes font size: clamped to 10–24, invalid falls back to default', () => {
     expect(normalizeSettings({}).fontSize).toBe(DEFAULT_FONT_SIZE);
     expect(normalizeSettings({ fontSize: 18 }).fontSize).toBe(18);
-    expect(normalizeSettings({ fontSize: 72 }).fontSize).toBe(72);
+    expect(normalizeSettings({ fontSize: MAX_FONT_SIZE }).fontSize).toBe(MAX_FONT_SIZE);
+    expect(normalizeSettings({ fontSize: 72 }).fontSize).toBe(DEFAULT_FONT_SIZE);
     expect(normalizeSettings({ fontSize: MIN_FONT_SIZE - 1 }).fontSize).toBe(DEFAULT_FONT_SIZE);
     expect(normalizeSettings({ fontSize: '18' }).fontSize).toBe(DEFAULT_FONT_SIZE);
     expect(normalizeSettings({ fontSize: Number.NaN }).fontSize).toBe(DEFAULT_FONT_SIZE);

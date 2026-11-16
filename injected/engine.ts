@@ -10,6 +10,9 @@ interface DetectorObject {
   selector: string;
   textIncludes?: string;
   textExcludes?: string;
+  // Optional machine-readable reason reported when this detector fires
+  // (e.g. "region-restricted" for Doubao's region-ban page).
+  detail?: string;
 }
 
 type Detector = string | DetectorObject;
@@ -541,7 +544,7 @@ class InactiveSendOperationError extends Error {
     }
   }
 
-  function hasDetector(detectors: Detector[] = []): boolean {
+  function matchedDetector(detectors: Detector[] = []): Detector | undefined {
     for (const detector of detectors) {
       const selector = typeof detector === 'string' ? detector : detector.selector;
       const matches = Array.from(document.querySelectorAll(selector));
@@ -549,14 +552,18 @@ class InactiveSendOperationError extends Error {
       if (first && !matches.includes(first)) matches.push(first);
       for (const element of matches) {
         if (!isElementVisible(element)) continue;
-        if (typeof detector === 'string') return true;
+        if (typeof detector === 'string') return detector;
         const text = element.textContent ?? '';
         if (detector.textIncludes && !text.includes(detector.textIncludes)) continue;
         if (detector.textExcludes && text.includes(detector.textExcludes)) continue;
-        return true;
+        return detector;
       }
     }
-    return false;
+    return undefined;
+  }
+
+  function hasDetector(detectors: Detector[] = []): boolean {
+    return matchedDetector(detectors) !== undefined;
   }
 
   function reportStatus() {
@@ -565,15 +572,18 @@ class InactiveSendOperationError extends Error {
       return;
     }
     let login: 'logged_in' | 'logged_out' | 'blocked' = 'logged_out';
+    let loginDetail: string | undefined;
+    const loggedOutMatch = matchedDetector(adapter.loggedOutDetectors);
     if (isProviderChallengeActive(adapter.provider)) {
       login = 'blocked';
     } else if (adapter.provider === 'meta' && queryInput(adapter) !== null) {
       // A usable composer wins. After Facebook/Instagram login the page can still
       // expose a login control or an inert prehydration field beside the real editor.
       login = 'logged_in';
-    } else if (hasDetector(adapter.loggedOutDetectors) || adapter.provider === 'meta') {
+    } else if (loggedOutMatch !== undefined || adapter.provider === 'meta') {
       // Meta does not treat a visible but gated composer, or Send alone, as logged in.
       login = 'logged_out';
+      if (typeof loggedOutMatch === 'object' && loggedOutMatch.detail) loginDetail = loggedOutMatch.detail;
     } else if (
       hasDetector(adapter.loginDetectors) ||
       (adapter.provider === 'grok' &&
@@ -587,7 +597,7 @@ class InactiveSendOperationError extends Error {
       v: 1,
       action: 'STATUS_REPORT',
       provider: adapter.provider,
-      payload: { dom: 'ready', login, thinking: isGenerating(), bootId: bridge.bootId },
+      payload: { dom: 'ready', login, ...(loginDetail ? { loginDetail } : {}), thinking: isGenerating(), bootId: bridge.bootId },
     });
   }
 

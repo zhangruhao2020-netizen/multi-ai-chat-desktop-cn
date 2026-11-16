@@ -79,6 +79,9 @@ export interface ProviderState {
   bridge?: 'ok' | 'degraded';
   bridgeReason?: string;
   adapter?: 'ok' | 'broken';
+  // Machine-readable reason for a logged_out state, from the matched
+  // logged-out detector's `detail` (e.g. "region-restricted").
+  loginDetail?: 'region-restricted';
 }
 
 export type MessageAction =

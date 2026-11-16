@@ -4,6 +4,7 @@ import type { AIProvider, ProviderState } from '../../shared/types';
 import { resetProviderBootState } from '../bridge/pull';
 import { host } from '../host';
 import { useI18n } from '../i18n/context';
+import type { I18nKey } from '../i18n/keys';
 import { formatI18n } from '../i18n/t';
 import type { AdapterPermissionSummary } from './adapterPermissions';
 import { AiSisterAvatar } from './AiSisterTheme';
@@ -15,6 +16,14 @@ import { ProcessTrace } from './ProcessTrace';
 import type { ProcessTraceState } from './processTraceModel';
 
 export type CenterSurface = 'text' | 'native';
+
+// One data-driven login-guidance banner (H7): a new provider adds one map
+// entry instead of another copy-pasted conditional block.
+const LOGIN_GUIDANCE_KEYS: Partial<Record<AIProvider, I18nKey>> = {
+  meta: 'provider.metaLoginGuidance',
+  deepseek: 'provider.deepseekLoginGuidance',
+  doubao: 'provider.doubaoLoginGuidance',
+};
 
 type ProviderActionState = {
   provider: AIProvider;
@@ -311,6 +320,7 @@ function FocusStage({
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
   const hidden = hiddenByUser || hiddenByCenter;
   const showLoginCta = state.login === 'logged_out' || state.login === 'blocked';
+  const loginGuidanceKey = showLoginCta ? LOGIN_GUIDANCE_KEYS[provider] : undefined;
   const moreMenuId = `provider-actions-${provider}`;
 
   useEffect(() => {
@@ -413,19 +423,11 @@ function FocusStage({
           </div>
         </div>
       </div>
-      {provider === 'meta' && showLoginCta ? (
+      {loginGuidanceKey ? (
         <div className="border-b border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
-          {t('provider.metaLoginGuidance')}
-        </div>
-      ) : null}
-      {provider === 'deepseek' && showLoginCta ? (
-        <div className="border-b border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
-          {t('provider.deepseekLoginGuidance')}
-        </div>
-      ) : null}
-      {provider === 'doubao' && showLoginCta ? (
-        <div className="border-b border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
-          {t('provider.doubaoLoginGuidance')}
+          {provider === 'doubao' && state.loginDetail === 'region-restricted'
+            ? t('provider.doubaoRegionRestricted')
+            : t(loginGuidanceKey)}
         </div>
       ) : null}
       {/* WebView 以此區域定位，讓上方標題列（含「文字檢視」返回鈕）保持可見 */}

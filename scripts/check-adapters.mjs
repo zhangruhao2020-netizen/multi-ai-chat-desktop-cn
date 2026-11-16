@@ -197,9 +197,9 @@ const expected = {
       'button[aria-label="发送"]',
     ],
     loggedOutDetectors: [
+      { selector: 'body', textIncludes: '受区域限制', detail: 'region-restricted' },
       { selector: 'button', textIncludes: '登录' },
       { selector: 'button', textIncludes: 'Log In' },
-      { selector: 'body', textIncludes: '受区域限制' },
     ],
     thinkingDetectors: ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
     stopButtonSelectors: ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
@@ -367,9 +367,9 @@ assertEqual(
 assertEqual(
   doubaoAdapter.loggedOutDetectors,
   [
+    { selector: 'body', textIncludes: '受区域限制', detail: 'region-restricted' },
     { selector: 'button', textIncludes: '登录' },
     { selector: 'button', textIncludes: 'Log In' },
-    { selector: 'body', textIncludes: '受区域限制' },
   ],
   'doubao.initialSeed.loggedOutDetectors',
 );

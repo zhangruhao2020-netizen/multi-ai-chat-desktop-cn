@@ -21,6 +21,10 @@ pub struct DetectorObject {
     pub text_includes: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text_excludes: Option<String>,
+    // Optional machine-readable reason the UI can show when this detector
+    // fires (e.g. "region-restricted" for Doubao's region-ban page).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -362,6 +366,11 @@ fn validate_detectors(name: &str, detectors: &[Detector]) -> Result<(), String> 
             Detector::Detailed(detector) => {
                 if detector.selector.trim().is_empty() {
                     return Err(format!("{name} selector must be non-empty"));
+                }
+                if let Some(detail) = &detector.detail {
+                    if detail != "region-restricted" {
+                        return Err(format!("{name} detail must be \"region-restricted\""));
+                    }
                 }
                 for value in [&detector.text_includes, &detector.text_excludes]
                     .into_iter()
@@ -856,6 +865,7 @@ mod tests {
             selector: " ".into(),
             text_includes: Some("Sign in".into()),
             text_excludes: None,
+            detail: None,
         })];
         assert!(validate_adapter(&adapter)
             .unwrap_err()
@@ -865,10 +875,33 @@ mod tests {
             selector: "button".into(),
             text_includes: Some("".into()),
             text_excludes: None,
+            detail: None,
         })];
         assert!(validate_adapter(&adapter)
             .unwrap_err()
             .contains("text filters must be non-empty"));
+    }
+
+    #[test]
+    fn detector_validation_accepts_only_the_known_region_detail() {
+        let mut adapter = adapters().get("doubao").unwrap().clone();
+        adapter.logged_out_detectors = vec![Detector::Detailed(DetectorObject {
+            selector: "body".into(),
+            text_includes: Some("受区域限制".into()),
+            text_excludes: None,
+            detail: Some("region-restricted".into()),
+        })];
+        validate_adapter(&adapter).unwrap();
+
+        adapter.logged_out_detectors = vec![Detector::Detailed(DetectorObject {
+            selector: "body".into(),
+            text_includes: Some("受区域限制".into()),
+            text_excludes: None,
+            detail: Some("other".into()),
+        })];
+        assert!(validate_adapter(&adapter)
+            .unwrap_err()
+            .contains("detail must be \"region-restricted\""));
     }
 
     #[test]

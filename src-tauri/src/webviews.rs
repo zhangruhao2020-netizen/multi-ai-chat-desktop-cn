@@ -163,6 +163,7 @@ fn set_provider_challenge_blocked(app: &AppHandle, provider: &str) {
     state.thinking = false;
     state.last_status_at = now_ms();
     state.bridge_reason = None;
+    state.login_detail = None;
     set_state(app, state);
 }
 
@@ -176,6 +177,7 @@ fn clear_provider_challenge_blocked(app: &AppHandle, provider: &str) {
     state.thinking = false;
     state.last_status_at = now_ms();
     state.bridge_reason = None;
+    state.login_detail = None;
     set_state(app, state);
 }
 
@@ -246,6 +248,10 @@ pub struct ProviderState {
     #[serde(rename = "bridgeReason")]
     pub bridge_reason: Option<String>,
     pub adapter: String,
+    // Machine-readable reason for a logged_out state, from the matched
+    // logged-out detector's `detail` (e.g. "region-restricted").
+    #[serde(rename = "loginDetail", skip_serializing_if = "Option::is_none")]
+    pub login_detail: Option<String>,
 }
 
 #[derive(Default)]
@@ -890,6 +896,7 @@ fn record_grok_bridge_challenge(provider: &str, observed_epoch: u64) -> Option<P
     next_state.thinking = false;
     next_state.last_status_at = now_ms();
     next_state.bridge_reason = None;
+    next_state.login_detail = None;
     guard
         .states
         .insert(provider.to_string(), next_state.clone());
@@ -1983,6 +1990,12 @@ fn update_status_state(
         } else if let Some(logged_in) = payload.get("loggedIn").and_then(|v| v.as_bool()) {
             state.login = if logged_in { "logged_in" } else { "logged_out" }.into();
         }
+        // The detail comes from the matched logged-out detector and is only
+        // meaningful with the current report; a report without one clears it.
+        state.login_detail = match payload.get("loginDetail").and_then(|v| v.as_str()) {
+            Some("region-restricted") => Some("region-restricted".into()),
+            _ => None,
+        };
         if let Some(thinking) = payload.get("thinking").and_then(|v| v.as_bool()) {
             state.thinking = thinking;
         }
@@ -2140,6 +2153,7 @@ fn state_with(
         last_status_at: now_ms(),
         bridge: "ok".into(),
         bridge_reason: None,
+        login_detail: None,
         adapter: if adapters::broken_adapters().contains(provider) {
             "broken"
         } else {
@@ -2164,6 +2178,7 @@ fn reset_state_for_page_load(state: &mut ProviderState) {
     state.last_status_at = now_ms();
     state.bridge = "ok".into();
     state.bridge_reason = None;
+    state.login_detail = None;
 }
 
 fn reset_bridge_state(app: &AppHandle, provider: &str) {

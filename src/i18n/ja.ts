@@ -119,6 +119,7 @@ export const ja: Record<I18nKey, string> = {
   'provider.metaLoginGuidance': 'ゲスト、メール／携帯、またはFacebook／Instagramのログインはこのウィンドウで完了してください。別のブラウザでログインしてもここに戻れません。',
   'provider.deepseekLoginGuidance': '電話番号／メール、Google、またはAppleのログインはこのウィンドウで完了してください。別のブラウザでログインしてもここに戻れません。',
   'provider.doubaoLoginGuidance': '電話番号、抖音、またはAppleのログインはこのウィンドウで完了してください。別のブラウザでログインしてもここに戻れません。',
+  'provider.doubaoRegionRestricted': 'Doubaoはお住まいの地域では利用できません。中国本土限定のサービスのため、ここからログインは完了できません。',
   'provider.moreActions': 'プロバイダーのその他の操作',
   'provider.reload': '再読み込み',
   'provider.report': '報告',

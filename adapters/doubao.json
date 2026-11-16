@@ -35,16 +35,17 @@
   ],
   "loggedOutDetectors": [
     {
+      "selector": "body",
+      "textIncludes": "受区域限制",
+      "detail": "region-restricted"
+    },
+    {
       "selector": "button",
       "textIncludes": "登录"
     },
     {
       "selector": "button",
       "textIncludes": "Log In"
-    },
-    {
-      "selector": "body",
-      "textIncludes": "受区域限制"
     }
   ],
   "thinkingDetectors": [

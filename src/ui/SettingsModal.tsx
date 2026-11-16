@@ -10,6 +10,7 @@ import {
   activeProvidersForStandby,
   type AppSettings,
   DEFAULT_FONT_SIZE,
+  MAX_FONT_SIZE,
   MIN_FONT_SIZE,
   normalizeSettings,
 } from './settingsModel';
@@ -385,9 +386,9 @@ export function SettingsModal({
       titleId="settings-title"
       onEscape={closeSettings}
       onBackdrop={closeSettings}
-      panelClassName="max-h-[92vh] w-full max-w-2xl overflow-auto rounded-lg border border-zinc-300 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-950"
+      panelClassName="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-950"
     >
-        <div className="mb-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+        <div className="mb-4 flex shrink-0 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
           <h2 id="settings-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{t('settings.title')}</h2>
           <Button variant="ghost" size="sm" onClick={closeSettings} disabled={saving}>
             {t('settings.close')}
@@ -395,7 +396,7 @@ export function SettingsModal({
         </div>
 
         {draft ? (
-          <div className="space-y-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{t('settings.general')}</h3>
             <section>
               <label className="block text-xs text-zinc-600 dark:text-zinc-400">
@@ -462,13 +463,14 @@ export function SettingsModal({
                 <input
                   type="number"
                   min={MIN_FONT_SIZE}
+                  max={MAX_FONT_SIZE}
                   step={1}
                   value={fontSizeText ?? String(draft.fontSize)}
                   onChange={(event) => {
                     const text = event.target.value;
                     setFontSizeText(text);
                     const value = Number(text);
-                    if (Number.isFinite(value) && value >= MIN_FONT_SIZE) scheduleFontSizeUpdate(value);
+                    if (Number.isFinite(value) && value >= MIN_FONT_SIZE && value <= MAX_FONT_SIZE) scheduleFontSizeUpdate(value);
                   }}
                   onBlur={() => setFontSizeText(undefined)}
                   className="w-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-sky-500 dark:focus:border-sky-600"
@@ -702,7 +704,7 @@ export function SettingsModal({
           </div>
         ) : null}
 
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        <div className="mt-5 flex shrink-0 flex-wrap items-end justify-between gap-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
           <div className="space-y-1 text-xs text-zinc-500 dark:text-zinc-400">
             <div>
               <SettingsExternalLink

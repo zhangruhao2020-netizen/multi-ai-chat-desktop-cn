@@ -418,6 +418,14 @@ html.ai-sister .ai-sister-message[data-provider='grok'] {
   border-left-color: #8b5cf6;
 }
 
+html.ai-sister .ai-sister-message[data-provider='deepseek'] {
+  border-left-color: #4d6bfe;
+}
+
+html.ai-sister .ai-sister-message[data-provider='doubao'] {
+  border-left-color: #2e6bff;
+}
+
 html.ai-sister #workflow-control-shelf button,
 html.ai-sister .ai-sister-conversation-workspace button,
 html.ai-sister .ai-sister-session-sidebar button {

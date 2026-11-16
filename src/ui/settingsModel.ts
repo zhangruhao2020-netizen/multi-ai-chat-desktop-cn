@@ -104,11 +104,14 @@ function theme(value: unknown, fallback: AppSettings['theme']): AppSettings['the
 }
 
 export const DEFAULT_FONT_SIZE = 16;
-// 下限 10px，避免 UI 縮到無法操作；依需求不限制上限。
+// 下限 10px，避免 UI 縮到無法操作；上限 24px，避免一次誤輸入撐爆 rem 佈局。
 export const MIN_FONT_SIZE = 10;
+export const MAX_FONT_SIZE = 24;
 
 function fontSize(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= MIN_FONT_SIZE ? value : DEFAULT_FONT_SIZE;
+  return typeof value === 'number' && Number.isFinite(value) && value >= MIN_FONT_SIZE && value <= MAX_FONT_SIZE
+    ? value
+    : DEFAULT_FONT_SIZE;
 }
 
 function columnWidths(value: unknown, fallback: ColumnWidths): ColumnWidths {

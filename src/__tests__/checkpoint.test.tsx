@@ -71,6 +71,13 @@ describe('CheckpointCard', () => {
     expect(CheckpointCard({ checkpoint: undefined, draft: '', onDraftChange: vi.fn() })).toBeNull();
   });
 
+  it('lets the three action buttons wrap without shrinking', () => {
+    const tree = CheckpointCard({ checkpoint: pendingCheckpoint(), draft: '', onDraftChange: vi.fn() });
+    const html = renderToStaticMarkup(tree);
+    expect(html).toContain('flex flex-wrap gap-2');
+    expect(html.match(/shrink-0 whitespace-nowrap/g)).toHaveLength(3);
+  });
+
   it('renders the draft and confirms the edited draft through the checkpoint registry', async () => {
     const checkpoint = pendingCheckpoint();
     const decision = awaitCheckpoint(checkpoint);

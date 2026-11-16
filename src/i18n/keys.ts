@@ -100,6 +100,7 @@ export const I18N_KEYS = [
   'provider.metaLoginGuidance',
   'provider.deepseekLoginGuidance',
   'provider.doubaoLoginGuidance',
+  'provider.doubaoRegionRestricted',
   'provider.moreActions',
   'provider.reload',
   'provider.report',

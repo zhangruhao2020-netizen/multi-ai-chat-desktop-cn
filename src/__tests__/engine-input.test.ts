@@ -909,15 +909,15 @@ describe('injected engine input hardening', () => {
     dispatchAdapter(handler, bundledDoubaoAdapter());
 
     expect(doubaoAdapterSeed.loggedOutDetectors).toEqual([
+      { selector: 'body', textIncludes: '受区域限制', detail: 'region-restricted' },
       { selector: 'button', textIncludes: '登录' },
       { selector: 'button', textIncludes: 'Log In' },
-      { selector: 'body', textIncludes: '受区域限制' },
     ]);
     expect(env.emitted.at(-1)).toEqual({
       v: 1,
       action: 'STATUS_REPORT',
       provider: 'doubao',
-      payload: { dom: 'ready', login: 'logged_out', thinking: false, bootId: 'boot1' },
+      payload: { dom: 'ready', login: 'logged_out', loginDetail: 'region-restricted', thinking: false, bootId: 'boot1' },
     });
   });
 

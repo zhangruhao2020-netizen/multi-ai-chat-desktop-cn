@@ -1994,7 +1994,7 @@ export default function App() {
                 stageExpanded && !checkpoint && !(stepTimeout && !stepTimeout.timedOut) ? 'hidden' : ''
               }`}
             >
-              <AiSisterEnsembleCard />
+              <AiSisterEnsembleCard providers={activeProviders} />
               <PresetCatalog
                 mode={mode}
                 selectedPresetId={presetId}
