@@ -60,9 +60,17 @@ export function Resizer({
       aria-valuemax={max}
       aria-valuenow={value}
       tabIndex={0}
-      className="h-full cursor-col-resize bg-zinc-50 dark:bg-zinc-900 transition-colors hover:bg-sky-200 dark:hover:bg-sky-700"
+      className="group relative h-full cursor-col-resize bg-zinc-50 dark:bg-zinc-900 transition-colors hover:bg-sky-200 dark:hover:bg-sky-700"
       onPointerDown={onPointerDown}
       onKeyDown={onKeyDown}
-    />
+    >
+      {/* M8: the visual bar stays 6px, but the grab zone extends 4px past each
+          edge (~14px total) so the resizer is findable and draggable. */}
+      <span aria-hidden="true" className="absolute -inset-y-0 -left-1 -right-1" />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-zinc-500"
+      />
+    </div>
   );
 }

@@ -152,6 +152,14 @@ describe('FocusPane provider header', () => {
     expect(html).not.toContain('role="button"');
   });
 
+  it('lays the status strip out as two even rows of three instead of 4+2', () => {
+    const html = renderFocusPane({
+      presentation: setProviderPresentation(defaultPresentation(), 'chatgpt', 'center'),
+    });
+    expect(html).toContain('ai-sister-connection-grid grid grid-cols-3');
+    expect(html).not.toContain('grid-cols-4');
+  });
+
   it('shows Meta AI only when it replaces the selected standby provider', () => {
     const html = renderFocusPane({
       activeProviders: ['chatgpt', 'claude', 'gemini', 'meta'],

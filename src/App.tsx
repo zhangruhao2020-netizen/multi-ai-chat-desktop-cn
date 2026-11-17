@@ -98,6 +98,7 @@ import { buildPreflightDialogModel } from './ui/preflightModel';
 import { preflightFromResult, type PreflightSubject } from './ui/preflightFromResult';
 import { processingAfterSend, processingAfterSettle, processingAfterWorkflowStatus } from './ui/processing';
 import { Resizer } from './ui/Resizer';
+import { JumpToLatestButton } from './ui/JumpToLatestButton';
 import { SettingsModal } from './ui/SettingsModal';
 import {
   activeProvidersForStandby,
@@ -354,6 +355,7 @@ export default function App() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const transcriptStickToEndRef = useRef(true);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const transcriptSessionRef = useRef<string>();
   const transcriptLastMessageIdRef = useRef<string>();
   const statesRef = useRef(states);
@@ -1045,6 +1047,15 @@ export default function App() {
     if (!container) return;
     const provider = findScrollActiveProvider(container);
     setScrollFocusedProvider((current) => (current === provider ? current : provider));
+  }, []);
+
+  // M4: jumping back re-arms auto-stick so new messages keep following the end.
+  const jumpToLatest = useCallback(() => {
+    const container = transcriptRef.current;
+    if (!container) return;
+    transcriptStickToEndRef.current = true;
+    setShowJumpToLatest(false);
+    scrollTranscriptToEnd(container, 'smooth');
   }, []);
 
   // 訊息面板捲動時，換左側對應 chip 反白，讓長回應也能看得出是哪個 AI 講的。
@@ -2102,7 +2113,7 @@ export default function App() {
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  className={`flex h-7 items-center justify-center gap-1.5 border px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                  className={`flex h-8 items-center justify-center gap-1.5 border px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                     replayDrawerOpen ? 'border-sky-400 bg-sky-50 dark:border-sky-800 dark:bg-sky-950' : 'border-zinc-300 dark:border-zinc-700'
                   }`}
                   aria-label={translate('replay.historyToggle')}
@@ -2120,7 +2131,7 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  className="border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="min-h-8 border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => void exportConversation()}
                   disabled={messages.length === 0 || sharing}
                 >
@@ -2128,7 +2139,7 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  className={`flex h-7 w-7 items-center justify-center border text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                  className={`flex h-8 w-8 items-center justify-center border text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                     messagesMaximized ? 'border-sky-400 bg-sky-50 dark:border-sky-800 dark:bg-sky-950' : 'border-zinc-300 dark:border-zinc-700'
                   }`}
                   aria-label={translate(messagesMaximized ? 'header.restoreMessages' : 'header.maximizeMessages')}
@@ -2152,7 +2163,7 @@ export default function App() {
                     </svg>
                   )}
                 </button>
-                <button type="button" className="border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => setSettingsOpen(true)}>
+                <button type="button" className="min-h-8 border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => setSettingsOpen(true)}>
                   {translate('header.settings')}
                 </button>
               </div>
@@ -2201,16 +2212,23 @@ export default function App() {
               {adapterNoticeText(adapterNotice)}
             </div>
           ) : null}
-          <div
-            ref={transcriptRef}
-            className="ai-sister-conversation-transcript mt-3 min-h-0 flex-1 overflow-auto border-y border-zinc-200 dark:border-zinc-800 py-3"
-            onScroll={(event) => {
-              transcriptStickToEndRef.current = isTranscriptNearEnd(event.currentTarget);
-              handleTranscriptScroll();
-            }}
-          >
-            <ChatArea messages={messages} locale={locale} states={states} />
-            {import.meta.env.DEV ? <EchoPanel /> : null}
+          <div className="relative mt-3 flex min-h-0 flex-1 flex-col">
+            <div
+              ref={transcriptRef}
+              className="ai-sister-conversation-transcript min-h-0 flex-1 overflow-auto border-y border-zinc-200 dark:border-zinc-800 py-3"
+              onScroll={(event) => {
+                // M4: leaving the end reveals the jump-to-latest button; arriving
+                // back at the end (including via auto-stick) hides it again.
+                const nearEnd = isTranscriptNearEnd(event.currentTarget);
+                transcriptStickToEndRef.current = nearEnd;
+                setShowJumpToLatest((current) => (current === !nearEnd ? current : !nearEnd));
+                handleTranscriptScroll();
+              }}
+            >
+              <ChatArea messages={messages} locale={locale} states={states} />
+              {import.meta.env.DEV ? <EchoPanel /> : null}
+            </div>
+            <JumpToLatestButton visible={showJumpToLatest} label={translate('transcript.jumpToLatest')} onJump={jumpToLatest} />
           </div>
           <div className="ai-sister-conversation-composer shrink-0 border-t border-zinc-200 pt-2 dark:border-zinc-800">
             <InputBar

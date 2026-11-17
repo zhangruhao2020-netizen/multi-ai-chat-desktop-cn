@@ -58,6 +58,7 @@ export const en: Record<I18nKey, string> = {
   'header.followRun': 'Follow run',
   'header.followRunPaused': 'Following (paused - manual focus)',
   'header.followRunHelp': 'Automatically focus the AI that is currently responding.',
+  'transcript.jumpToLatest': 'Jump to latest',
   'layout.resizeFocusPane': 'Resize focus pane',
   'share.exported': 'Exported: {path}',
   'share.exportFailed': "Couldn't export this conversation. Please try again.",

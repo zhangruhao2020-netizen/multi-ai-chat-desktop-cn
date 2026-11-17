@@ -369,7 +369,7 @@ function FocusStage({
           {showLoginCta ? (
             <button
               type="button"
-              className="border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950 px-2 py-1 text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900"
+              className="min-h-8 border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950 px-2 py-1 text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900"
               onClick={() => void onOpenLogin(provider)}
             >
               {t('provider.login')}
@@ -397,7 +397,7 @@ function FocusStage({
                 <button
                   type="button"
                   role="menuitem"
-                  className="block w-full px-2 py-1.5 text-left text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="block w-full px-2 py-2 text-left text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     setMoreMenuOpen(false);
                     void onReload(provider);
@@ -409,7 +409,7 @@ function FocusStage({
                 <button
                   type="button"
                   role="menuitem"
-                  className="block w-full px-2 py-1.5 text-left text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="block w-full px-2 py-2 text-left text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     setMoreMenuOpen(false);
                     void reportProvider(provider);
@@ -443,7 +443,7 @@ function FocusStage({
       {(provider === 'gemini' || provider === 'grok') && state.login === 'blocked' ? (
         <div className="flex items-center justify-between gap-2 border-b border-amber-300 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
           <span>{t(provider === 'grok' ? 'provider.grokChallengeActive' : 'provider.embeddedLoginBlocked')}</span>
-          <button type="button" className="border border-amber-300 dark:border-amber-700 px-2 py-1 hover:bg-amber-100 dark:hover:bg-amber-900" onClick={() => void onOpenInBrowser(provider)}>
+          <button type="button" className="min-h-8 border border-amber-300 dark:border-amber-700 px-2 py-1 hover:bg-amber-100 dark:hover:bg-amber-900" onClick={() => void onOpenInBrowser(provider)}>
             {t('provider.openInBrowser')}
           </button>
         </div>
@@ -547,7 +547,7 @@ function StatusStrip({
         <h2 id="provider-connections-title" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{t('provider.connections')}</h2>
         <span className="text-[0.6875rem] text-zinc-500 dark:text-zinc-400">{t('provider.connectionsHint')}</span>
       </div>
-      <div className="ai-sister-connection-grid grid grid-cols-4 gap-1.5">
+      <div className="ai-sister-connection-grid grid grid-cols-3 gap-1.5">
         {providers.map((provider) => (
           <StatusStripItem
             key={provider}

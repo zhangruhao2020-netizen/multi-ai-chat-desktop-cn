@@ -58,6 +58,7 @@ export const de: Record<I18nKey, string> = {
   'header.followRun': 'Lauf folgen',
   'header.followRunPaused': 'Folgen aktiv (pausiert – manueller Fokus)',
   'header.followRunHelp': 'Fokussiert automatisch die KI, die gerade antwortet.',
+  'transcript.jumpToLatest': 'Zur neuesten Nachricht',
   'layout.resizeFocusPane': 'Fokusbereich skalieren',
   'share.exported': 'Exportiert: {path}',
   'share.exportFailed': 'Die Unterhaltung konnte nicht exportiert werden. Bitte erneut versuchen.',

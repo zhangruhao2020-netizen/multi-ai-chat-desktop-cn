@@ -79,18 +79,18 @@ export function PreflightDialog({
             const reason = standby ? t('settings.providerStandby', locale) : item.reason;
             return (
               <div key={item.provider} className="ui-panel flex items-center justify-between gap-3 p-2">
-                <div>
+                <div className="min-w-0">
                   <span style={{ color: AI_PROVIDERS[item.provider].color }}>{item.label}</span>
                   <span className="text-zinc-600 dark:text-zinc-400"> - {reason}</span>
                 </div>
                 {standby ? (
                   onOpenSettings ? (
-                    <Button variant="primary" size="sm" onClick={openSettings}>
+                    <Button variant="primary" size="sm" className="shrink-0" onClick={openSettings}>
                       {t('settings.title', locale)}
                     </Button>
                   ) : null
                 ) : (
-                  <Button variant="primary" size="sm" onClick={() => void openLogin(item.provider)}>
+                  <Button variant="primary" size="sm" className="shrink-0" onClick={() => void openLogin(item.provider)}>
                     {t('preflight.openLogin', locale)}
                   </Button>
                 )}
@@ -105,9 +105,9 @@ export function PreflightDialog({
           ))}
           {model.tooFewProviders ? (
             <div className="ui-panel flex items-center justify-between gap-3 p-2">
-              <span className="text-zinc-600 dark:text-zinc-400">{model.tooFewProviders}</span>
+              <span className="min-w-0 text-zinc-600 dark:text-zinc-400">{model.tooFewProviders}</span>
               {onOpenSettings ? (
-                <Button variant="primary" size="sm" onClick={openSettings}>
+                <Button variant="primary" size="sm" className="shrink-0" onClick={openSettings}>
                   {t('settings.title', locale)}
                 </Button>
               ) : null}

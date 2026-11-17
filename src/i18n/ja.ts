@@ -58,6 +58,7 @@ export const ja: Record<I18nKey, string> = {
   'header.followRun': '実行を追跡',
   'header.followRunPaused': '追跡中（手動フォーカスにより一時停止）',
   'header.followRunHelp': '現在応答しているAIへ自動的にフォーカスします。',
+  'transcript.jumpToLatest': '最新へ移動',
   'layout.resizeFocusPane': 'フォーカスペインのサイズを変更',
   'share.exported': '書き出しました：{path}',
   'share.exportFailed': '会話を書き出せませんでした。もう一度お試しください。',

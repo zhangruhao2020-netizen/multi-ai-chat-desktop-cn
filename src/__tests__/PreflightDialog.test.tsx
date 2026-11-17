@@ -134,6 +134,21 @@ describe('PreflightDialog login recovery', () => {
     expect(ui.onSwitchMode).toHaveBeenCalledTimes(action === 'Use Free mode' ? 1 : 0);
   });
 
+  it('keeps row text from squeezing the action button', () => {
+    const ui = harness(vi.fn(), {
+      onOpenSettings: vi.fn(),
+      model: {
+        title: 'Cannot start',
+        unavailable: [{ provider: 'claude', label: 'Claude', reason: 'Needs login because the session expired in a very long German sentence' }],
+        aliased: [],
+        tooFewProviders: t('preflight.tooFewProviders', 'en'),
+      },
+    });
+    const html = ui.html();
+    expect(html).toContain('min-w-0');
+    expect(html).toContain('shrink-0');
+  });
+
   it('uses the active lineup rather than translated status copy for recovery', () => {
     const onOpenLogin = vi.fn();
     const onOpenSettings = vi.fn();

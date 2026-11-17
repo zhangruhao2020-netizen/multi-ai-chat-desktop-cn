@@ -245,4 +245,11 @@ describe('TargetChips', () => {
     expect(propsOf(buttons[0]).disabled).toBe(false);
     expect(propsOf(buttons[1]).disabled).toBe(true);
   });
+
+  it('gives every chip a 32px minimum hit target', () => {
+    const renderer = renderTargetChips();
+    const buttons = findAllElements(renderer.tree, (element) => element.type === 'button');
+    expect(buttons).toHaveLength(2);
+    for (const button of buttons) expect(propsOf(button).className).toContain('min-h-8');
+  });
 });

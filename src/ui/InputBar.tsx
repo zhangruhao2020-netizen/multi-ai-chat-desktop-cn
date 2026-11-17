@@ -250,7 +250,7 @@ export function InputBar({
               ) : null}
               <button
                 type="button"
-                className="shrink-0 text-base leading-none text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-6 w-6 shrink-0 items-center justify-center text-base leading-none text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={() => removeAttachmentChip(chip.id)}
                 disabled={isProcessing}
                 aria-label={`${t('input.removeFile', locale)} ${attachmentChipName(chip)}`}

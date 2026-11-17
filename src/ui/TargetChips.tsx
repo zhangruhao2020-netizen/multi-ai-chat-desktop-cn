@@ -32,7 +32,7 @@ export function TargetChips({
             type="button"
             disabled={!sendable || disabled}
             onClick={() => onChange(toggleTarget(selected, provider))}
-            className={`ai-sister-target-chip border px-2 py-1 text-xs ${
+            className={`ai-sister-target-chip min-h-8 border px-2 py-1 text-xs ${
               active && sendable
                 ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200'
                 : 'border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 disabled:opacity-60'

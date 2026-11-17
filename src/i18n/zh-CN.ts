@@ -52,6 +52,7 @@ export const zhCN: Record<I18nKey, string> = {
   'header.followRun': '跟随运行',
   'header.followRunPaused': '跟随中（已暂停：手动焦点）',
   'header.followRunHelp': '自动把消息焦点切换到当前正在回复的 AI。',
+  'transcript.jumpToLatest': '跳到最新消息',
   'layout.resizeFocusPane': '调整焦点窗格宽度',
   'share.exported': '已导出：{path}',
   'share.exportFailed': '无法导出这段对话，请再试一次。',

@@ -50,6 +50,7 @@ export const I18N_KEYS = [
   'header.followRun',
   'header.followRunPaused',
   'header.followRunHelp',
+  'transcript.jumpToLatest',
   'layout.resizeFocusPane',
   'share.exported',
   'share.exportFailed',

@@ -26,7 +26,7 @@ const sizeClasses: Record<ButtonSize, string> = {
   md: 'px-3 py-1.5 text-xs',
 };
 
-const baseClasses = 'inline-flex items-center justify-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50';
+const baseClasses = 'inline-flex min-h-8 items-center justify-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;

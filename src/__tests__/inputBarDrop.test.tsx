@@ -150,6 +150,25 @@ describe('InputBar file acquisition', () => {
     });
   });
 
+  it('gives each attachment remove button at least a 24x24 hit target', async () => {
+    const renderer = renderInputBar();
+
+    dropFiles(renderer, [fileFromText('a.txt', 'alpha')]);
+
+    await vi.waitFor(() => {
+      expect(chipNames(renderer)).toEqual(['a.txt']);
+    });
+    const removeButtons = findAllElements(
+      renderer.tree,
+      (element) =>
+        element.type === 'button' &&
+        typeof propsOf(element)['aria-label'] === 'string' &&
+        propsOf(element)['aria-label']!.startsWith(`${t('input.removeFile', 'en')} `),
+    );
+    expect(removeButtons).toHaveLength(1);
+    expect(propsOf(removeButtons[0]).className).toContain('h-6 w-6');
+  });
+
   it('disables Send while reading and enables it for ready attachments with empty text', async () => {
     const slow = deferredFile('slow.txt', 'slow content');
     const renderer = renderInputBar();
