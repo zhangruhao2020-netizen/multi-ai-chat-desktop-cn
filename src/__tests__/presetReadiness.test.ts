@@ -27,7 +27,7 @@ describe('presetReadiness', () => {
   const free = PRESET_CATALOG.find((preset) => preset.id === 'free')!;
 
   it('is not ready when the four-provider debate defaults have only one ready provider', () => {
-    expect(presetReadiness(debate, statesFor(['gemini']), 'en')).toEqual({
+    expect(presetReadiness(debate, statesFor(['deepseek']), 'en')).toEqual({
       label: '1/4 ready',
       ready: false,
     });

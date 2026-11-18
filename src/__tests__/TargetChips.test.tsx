@@ -87,6 +87,7 @@ interface ElementProps {
   onClick?: () => void;
   type?: string;
   className?: string;
+  style?: { borderLeftColor?: string; borderLeftWidth?: number };
 }
 
 interface Renderer {
@@ -251,5 +252,19 @@ describe('TargetChips', () => {
     const buttons = findAllElements(renderer.tree, (element) => element.type === 'button');
     expect(buttons).toHaveLength(2);
     for (const button of buttons) expect(propsOf(button).className).toContain('min-h-8');
+  });
+
+  it('marks every chip with its provider brand color as a left border (M9)', () => {
+    const renderer = renderTargetChips();
+    const buttons = findAllElements(renderer.tree, (element) => element.type === 'button');
+    expect(buttons).toHaveLength(2);
+    expect(propsOf(buttons[0]).style).toMatchObject({
+      borderLeftColor: AI_PROVIDERS.chatgpt.color,
+      borderLeftWidth: 3,
+    });
+    expect(propsOf(buttons[1]).style).toMatchObject({
+      borderLeftColor: AI_PROVIDERS.claude.color,
+      borderLeftWidth: 3,
+    });
   });
 });

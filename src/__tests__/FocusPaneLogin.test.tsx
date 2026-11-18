@@ -484,3 +484,15 @@ describe('FocusPane login-guidance banner', () => {
     expect(html).not.toContain('Doubao is unavailable in your region');
   });
 });
+
+describe('FocusPane status strip', () => {
+  it('marks every status-strip card with its provider brand color (M9)', () => {
+    const ui = harness();
+    const html = renderToStaticMarkup(ui.render());
+    // The harness seats chatgpt, claude, gemini and meta in the strip.
+    for (const provider of ['chatgpt', 'claude', 'gemini', 'meta'] as const) {
+      expect(html).toContain(`border-left-color:${AI_PROVIDERS[provider].color}`);
+    }
+    expect(html).toContain('border-left-width:3px');
+  });
+});

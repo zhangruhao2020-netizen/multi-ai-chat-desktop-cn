@@ -323,6 +323,12 @@ export default function App() {
   const [preflightLoginPending, setPreflightLoginPending] = useState(false);
   const [preflight, setPreflight] = useState<{ mode: PreflightSubject; result: PreflightResult } | undefined>();
   const [stepTimeout, setStepTimeout] = useState<StepTimeoutDialogState | undefined>();
+  const [stepTimeoutRemainingMs, setStepTimeoutRemainingMs] = useState<number | undefined>(undefined);
+  // M10: drop the mirrored countdown the moment there is no live countdown
+  // to mirror, so the toolbar never shows a stale number.
+  useEffect(() => {
+    if (!stepTimeout || stepTimeout.timedOut) setStepTimeoutRemainingMs(undefined);
+  }, [stepTimeout]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shareNotice, setShareNotice] = useState<{ kind: 'ok' | 'error'; text: string } | undefined>();
   const [sessionCheckpointNotice, setSessionCheckpointNotice] = useState<StartupSessionCheckpointNotice | undefined>();
@@ -2045,7 +2051,7 @@ export default function App() {
                 </details>
               ) : null}
               {stepTimeout && !stepTimeout.timedOut ? (
-                <StepTimeoutDialog event={stepTimeout} onClose={() => setStepTimeout(undefined)} locale={locale} />
+                <StepTimeoutDialog event={stepTimeout} onClose={() => setStepTimeout(undefined)} locale={locale} onRemainingChange={setStepTimeoutRemainingMs} />
               ) : null}
             </section>
             <FocusPane
@@ -2106,7 +2112,22 @@ export default function App() {
                     <span className="mr-1">{presetId === 'brainstorm' ? '✨' : CHAT_MODES[mode].icon}</span>
                     {presetId === 'brainstorm' ? translate(presetForId(presetId).displayNameKey) : translate(MODE_NAME_KEYS[mode])}
                   </span>
-                  <span className="min-w-0 truncate text-xs text-zinc-600 dark:text-zinc-400">{workflowStatus || translate('processTrace.settled')}</span>
+                  {/* M10: the step-timeout countdown is mirrored here because
+                      the shelf strip scrolls out of view; the toolbar row is
+                      always visible. */}
+                  {stepTimeout && !stepTimeout.timedOut && stepTimeoutRemainingMs !== undefined ? (
+                    <span className="min-w-0 truncate text-xs font-medium text-amber-700 dark:text-amber-300" role="status">
+                      {formatI18n(translate('stepTimeout.waiting'), {
+                        provider:
+                          stepTimeout.provider in AI_PROVIDERS
+                            ? AI_PROVIDERS[stepTimeout.provider as AIProvider].name
+                            : stepTimeout.provider,
+                        seconds: Math.ceil(stepTimeoutRemainingMs / 1000),
+                      })}
+                    </span>
+                  ) : (
+                    <span className="min-w-0 truncate text-xs text-zinc-600 dark:text-zinc-400">{workflowStatus || translate('processTrace.settled')}</span>
+                  )}
                 </div>
               </div>
               {/* One group, so the controls wrap as a block and stay right-aligned on the new row. */}
@@ -2127,7 +2148,11 @@ export default function App() {
                     <path d="M3 4v5h5" />
                     <path d="M12 7v5l3 2" />
                   </svg>
-                  <span>{translate('replay.historyToggle')}</span>
+                  {/* M11: the German label ("Wiederholungsverlauf", 20 chars)
+                      crowds the toolbar at narrow widths — icon-only below
+                      1200px viewport width; the full label stays in
+                      aria-label/title for screen readers and tooltips. */}
+                  <span className="hidden min-[1200px]:inline">{translate('replay.historyToggle')}</span>
                 </button>
                 <button
                   type="button"

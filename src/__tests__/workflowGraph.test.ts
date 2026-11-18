@@ -205,7 +205,7 @@ describe('workflow graph foundation', () => {
   });
 
   it('blocks Brainstorm when a seated provider is unavailable', async () => {
-    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('gemini'), state('grok')]);
+    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('deepseek'), state('doubao'), state('gemini'), state('grok')]);
 
     await expect(preflightGraph(brainstormGraph, DEFAULT_ROUNDTABLE_ROLES)).resolves.toMatchObject({
       ok: false,
@@ -215,17 +215,23 @@ describe('workflow graph foundation', () => {
   });
 
   it.each([
-    ['Debate', debateGraph, DEFAULT_DEBATE_ROLES],
-    ['Consult', consultGraph, DEFAULT_CONSULT_ROLES],
-    ['Coding', codingGraph, DEFAULT_CODING_ROLES],
-    ['Roundtable', roundtableGraph, DEFAULT_ROUNDTABLE_ROLES],
-    ['Brainstorm', brainstormGraph, DEFAULT_ROUNDTABLE_ROLES],
-  ] as const)('requires Grok for the four-provider default %s setup', async (_name, graph, roles) => {
-    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude'), state('gemini'), state('grok', false)]);
+    ['Debate', debateGraph, DEFAULT_DEBATE_ROLES, 'deepseek'],
+    ['Consult', consultGraph, DEFAULT_CONSULT_ROLES, 'grok'],
+    ['Coding', codingGraph, DEFAULT_CODING_ROLES, 'grok'],
+    ['Roundtable', roundtableGraph, DEFAULT_ROUNDTABLE_ROLES, 'doubao'],
+    ['Brainstorm', brainstormGraph, DEFAULT_ROUNDTABLE_ROLES, 'doubao'],
+  ] as const)('requires every seated provider ready for the default %s setup', async (_name, graph, roles, unready) => {
+    // Each mode seats a different rotated slice of the active list (M12), so
+    // the unready provider is picked per mode instead of assuming Grok is
+    // seated everywhere.
+    const connected: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'];
+    vi.mocked(host.connections.get).mockResolvedValue(
+      connected.map((provider) => state(provider, provider !== unready)),
+    );
 
     await expect(preflightGraph(graph, roles)).resolves.toMatchObject({
       ok: false,
-      unavailable: ['grok'],
+      unavailable: [unready],
       aliased: [],
     });
   });
@@ -249,7 +255,7 @@ describe('workflow graph foundation', () => {
   });
 
   it('preflights serial graphs with the existing sendable predicate', async () => {
-    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('gemini'), state('grok')]);
+    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('deepseek'), state('doubao'), state('gemini'), state('grok')]);
     await expect(preflightGraph(debateGraph, DEFAULT_DEBATE_ROLES)).resolves.toMatchObject({
       ok: false,
       unavailable: ['claude'],
@@ -281,8 +287,10 @@ describe('workflow graph foundation', () => {
   });
 
   it('blocks an inactive standby role without rewriting the supplied role map', async () => {
-    const roles = { ...DEFAULT_DEBATE_ROLES };
-    const activeProviders: AIProvider[] = ['chatgpt', 'claude', 'gemini', 'meta'];
+    // Grok no longer holds a default debate seat (M12), so the standby role
+    // is seated explicitly to keep this test about the standby block itself.
+    const roles = { ...DEFAULT_DEBATE_ROLES, judge: 'grok' as const };
+    const activeProviders: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'meta'];
     vi.mocked(host.connections.get).mockResolvedValue([...activeProviders, 'grok' as const].map((provider) => state(provider)));
 
     await expect(preflightGraph(debateGraph, roles, activeProviders)).resolves.toMatchObject({
@@ -290,7 +298,7 @@ describe('workflow graph foundation', () => {
       unavailable: ['grok'],
       aliased: [],
     });
-    expect(roles).toEqual(DEFAULT_DEBATE_ROLES);
+    expect(roles).toEqual({ ...DEFAULT_DEBATE_ROLES, judge: 'grok' });
     expect(isInactiveStandbyProvider('grok', activeProviders)).toBe(true);
     expect(isInactiveStandbyProvider('claude', activeProviders)).toBe(false);
     expect(isInactiveStandbyProvider('claude')).toBe(false);

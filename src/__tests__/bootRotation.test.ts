@@ -42,7 +42,7 @@ vi.mock('../host', () => ({
   },
 }));
 
-const providers: AIProvider[] = ['chatgpt', 'claude', 'gemini', 'grok', 'meta'];
+const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok', 'meta'];
 
 function state(provider: AIProvider): ProviderState {
   return {

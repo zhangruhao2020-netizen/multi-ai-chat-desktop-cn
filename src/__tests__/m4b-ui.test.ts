@@ -61,11 +61,51 @@ describe('M4b UI helpers', () => {
         rightBottom: 'gemini',
       }),
     ).toEqual({
-      leftTop: 'grok',
+      // The empty seat is filled from the eligible list in order; DeepSeek is
+      // the first eligible provider not already seated (M12).
+      leftTop: 'deepseek',
       leftBottom: 'chatgpt',
       rightTop: 'claude',
       rightBottom: 'gemini',
     });
+  });
+
+  it('seats DeepSeek and Doubao in dock slots like the original four (M12)', () => {
+    const assigned = assignSlotProvider(DEFAULT_SLOT_ASSIGNMENT, 'rightTop', 'deepseek');
+    expect(assigned).toEqual({
+      leftTop: 'chatgpt',
+      leftBottom: 'claude',
+      rightTop: 'deepseek',
+      rightBottom: 'grok',
+    });
+    expect(isProviderPermutation(SLOT_IDS.map((slot) => assigned[slot]))).toBe(true);
+
+    const swapped = assignSlotProvider(assigned, 'leftBottom', 'doubao');
+    expect(swapped).toEqual({
+      leftTop: 'chatgpt',
+      leftBottom: 'doubao',
+      rightTop: 'deepseek',
+      rightBottom: 'grok',
+    });
+
+    expect(
+      normalizeSlotAssignment({
+        leftTop: 'deepseek',
+        leftBottom: 'doubao',
+        rightTop: 'chatgpt',
+        rightBottom: 'grok',
+      }),
+    ).toEqual({
+      leftTop: 'deepseek',
+      leftBottom: 'doubao',
+      rightTop: 'chatgpt',
+      rightBottom: 'grok',
+    });
+
+    expect(isProviderPermutation(['chatgpt', 'deepseek', 'doubao', 'grok'])).toBe(true);
+    // The standby provider is not an eligible dock seat.
+    expect(isProviderPermutation(['chatgpt', 'claude', 'gemini', 'meta'])).toBe(false);
+    expect(assignSlotProvider(DEFAULT_SLOT_ASSIGNMENT, 'leftTop', 'meta')).toEqual(DEFAULT_SLOT_ASSIGNMENT);
   });
 
   it('filters visible loaded providers by webview state and user-hidden set', () => {

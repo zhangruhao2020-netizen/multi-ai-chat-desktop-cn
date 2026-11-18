@@ -59,6 +59,11 @@ export const AI_PROVIDERS: Record<AIProvider, {
 
 export const DOCK_SLOT_PROVIDERS = ['chatgpt', 'claude', 'gemini', 'grok'] as const satisfies readonly AIProvider[];
 export const DEFAULT_FREE_TARGET_PROVIDERS = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'] as const satisfies readonly AIProvider[];
+// M12 seating rule: the dock has exactly four physical slots, but any of the
+// six active providers may occupy one — DeepSeek and Doubao are no longer
+// locked out of dock seats. DOCK_SLOT_PROVIDERS above is only the *default*
+// four-seat lineup; slot logic gates on this eligible list instead.
+export const SLOT_ELIGIBLE_PROVIDERS = DEFAULT_FREE_TARGET_PROVIDERS;
 export const DEFAULT_STANDBY_PROVIDER: AIProvider = 'meta';
 
 // === Mode Definitions ===
@@ -103,35 +108,51 @@ export const CHAT_MODES: Record<ChatMode, {
 
 // === Default Role Assignments ===
 
-// Every built-in four-role setup starts with one seat per provider. Users can
-// still customize assignments in Settings when a provider is unavailable.
-export const DEFAULT_DEBATE_ROLES: DebateRoles = {
-  pro: 'chatgpt',
-  con: 'claude',
-  judge: 'grok',
-  summary: 'gemini',
-};
+// Seating rule (M12): each serial mode seats four providers taken in order
+// from the active-provider list, rotated by a per-mode offset so the four
+// modes seat different lineups. With the default six-provider lineup this
+// puts DeepSeek and Doubao in default seats instead of locking them out.
+// `activeProviders` must be non-empty; when the lineup changes (standby
+// swap), persisted assignments are repaired by keepModeRolesWithinProviders
+// to stay inside the active list.
+function seatRoles<Roles>(
+  activeProviders: readonly AIProvider[],
+  offset: number,
+  roles: readonly (keyof Roles)[],
+): Roles {
+  const seated = {} as Record<string, AIProvider>;
+  for (let index = 0; index < roles.length; index += 1) {
+    seated[roles[index] as string] = activeProviders[(offset + index) % activeProviders.length];
+  }
+  return seated as Roles;
+}
 
-export const DEFAULT_CONSULT_ROLES: ConsultRoles = {
-  first: 'chatgpt',
-  second: 'grok',
-  reviewer: 'claude',
-  summary: 'gemini',
-};
+export function defaultRolesForActiveProviders(activeProviders: readonly AIProvider[]): {
+  debate: DebateRoles;
+  consult: ConsultRoles;
+  coding: CodingRoles;
+  roundtable: RoundtableRoles;
+} {
+  return {
+    debate: seatRoles<DebateRoles>(activeProviders, 0, ['pro', 'con', 'judge', 'summary']),
+    consult: seatRoles<ConsultRoles>(activeProviders, 2, ['first', 'second', 'reviewer', 'summary']),
+    coding: seatRoles<CodingRoles>(activeProviders, 4, ['planner', 'reviewer', 'coder', 'tester']),
+    roundtable: seatRoles<RoundtableRoles>(activeProviders, 1, ['first', 'second', 'third', 'fourth']),
+  };
+}
 
-export const DEFAULT_CODING_ROLES: CodingRoles = {
-  planner: 'gemini',
-  reviewer: 'chatgpt',
-  coder: 'claude',
-  tester: 'grok',
-};
+// Every built-in four-role setup starts with one seat per provider, drawn
+// from the default active list above. Users can still customize assignments
+// in Settings when a provider is unavailable.
+const DEFAULT_ACTIVE_ROLES = defaultRolesForActiveProviders(DEFAULT_FREE_TARGET_PROVIDERS);
 
-export const DEFAULT_ROUNDTABLE_ROLES: RoundtableRoles = {
-  first: 'claude',
-  second: 'gemini',
-  third: 'grok',
-  fourth: 'chatgpt',
-};
+export const DEFAULT_DEBATE_ROLES: DebateRoles = DEFAULT_ACTIVE_ROLES.debate;
+
+export const DEFAULT_CONSULT_ROLES: ConsultRoles = DEFAULT_ACTIVE_ROLES.consult;
+
+export const DEFAULT_CODING_ROLES: CodingRoles = DEFAULT_ACTIVE_ROLES.coding;
+
+export const DEFAULT_ROUNDTABLE_ROLES: RoundtableRoles = DEFAULT_ACTIVE_ROLES.roundtable;
 
 const BRAINSTORM_SEAT_LENSES = [
   'practical user value, executable options, and a clear path from idea to action',

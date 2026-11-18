@@ -57,7 +57,9 @@ export function ReportPreviewDialog({
           <h2 id="report-preview-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{translateKey('reportPreview.title', locale)}</h2>
         </div>
         <div className="grid gap-2 text-xs text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
-          <div>
+          {/* L1: long temp paths and provider ids must wrap instead of
+              overflowing the max-w-2xl panel. */}
+          <div className="break-all">
             {translateKey('reportPreview.provider', locale)}: {digest.displayName} ({digest.provider})
           </div>
           <div>
@@ -66,7 +68,7 @@ export function ReportPreviewDialog({
           <div>
             {translateKey('reportPreview.appVersion', locale)}: {digest.appVersion}
           </div>
-          <div>
+          <div className="break-all">
             {translateKey('reportPreview.path', locale)}: {digest.path}
           </div>
           <div className="sm:col-span-2">

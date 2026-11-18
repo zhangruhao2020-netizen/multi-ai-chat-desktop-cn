@@ -615,6 +615,11 @@ function StatusStripItem({
       aria-pressed={centered}
       title={stuck || scrollFocused ? accessibleLabel : undefined}
       disabled={state.webview === 'creating' || openingProvider !== undefined}
+      // M9: the provider's brand color is the card's left border, so the six
+      // providers are told apart at a glance in the default theme too — the
+      // status dot encodes status, not identity, and avatars only render
+      // under the AI-Sister theme.
+      style={{ borderLeftColor: AI_PROVIDERS[provider].color, borderLeftWidth: 3 }}
       className={`ai-sister-provider-card relative min-w-0 rounded border px-2 py-1.5 text-left transition-colors disabled:cursor-wait disabled:opacity-70 ${
         centered
           ? 'cursor-default border-sky-400 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/40'

@@ -8,6 +8,7 @@ import {
   DEFAULT_DEBATE_ROLES,
   DEFAULT_FREE_TARGET_PROVIDERS,
   DEFAULT_ROUNDTABLE_ROLES,
+  defaultRolesForActiveProviders,
 } from '../../shared/constants';
 import { modeName } from '../i18n/modes';
 import { formatI18n, t } from '../i18n/t';
@@ -72,6 +73,29 @@ describe('M4a UI helpers', () => {
 
     expect(defaultRolesForMode('debate')).toEqual(DEFAULT_DEBATE_ROLES);
     expect(DEFAULT_DEBATE_ROLES.con).toBe('claude');
+  });
+
+  it('seats DeepSeek and Doubao in default serial-mode roles from the active list (M12)', () => {
+    // The four modes seat different rotated slices of the active list, so
+    // the two newer providers hold default seats instead of being locked out.
+    expect(DEFAULT_DEBATE_ROLES).toEqual({ pro: 'chatgpt', con: 'claude', judge: 'deepseek', summary: 'doubao' });
+    expect(DEFAULT_CONSULT_ROLES).toEqual({ first: 'deepseek', second: 'doubao', reviewer: 'gemini', summary: 'grok' });
+    expect(DEFAULT_CODING_ROLES).toEqual({ planner: 'gemini', reviewer: 'grok', coder: 'chatgpt', tester: 'claude' });
+    expect(DEFAULT_ROUNDTABLE_ROLES).toEqual({ first: 'claude', second: 'deepseek', third: 'doubao', fourth: 'gemini' });
+
+    const allDefaults = [DEFAULT_DEBATE_ROLES, DEFAULT_CONSULT_ROLES, DEFAULT_CODING_ROLES, DEFAULT_ROUNDTABLE_ROLES];
+    for (const roles of allDefaults) {
+      expect(new Set(Object.values(roles)).size).toBe(4);
+    }
+    const seated = new Set(allDefaults.flatMap((roles) => Object.values(roles)));
+    expect(seated).toEqual(new Set(DEFAULT_FREE_TARGET_PROVIDERS));
+
+    // The defaults follow the active list: with ChatGPT on standby, Meta joins
+    // the lineup and every mode seats four of the new list in rotated order.
+    const standbyChatgpt = defaultRolesForActiveProviders(['claude', 'deepseek', 'doubao', 'gemini', 'grok', 'meta']);
+    expect(standbyChatgpt.debate).toEqual({ pro: 'claude', con: 'deepseek', judge: 'doubao', summary: 'gemini' });
+    expect(standbyChatgpt.coding).toEqual({ planner: 'grok', reviewer: 'meta', coder: 'claude', tester: 'deepseek' });
+    expect(new Set(Object.values(standbyChatgpt.roundtable)).size).toBe(4);
   });
 
   it('hides loaded providers once for nested overlays and restores only at count zero', () => {
@@ -345,6 +369,20 @@ describe('M4a UI helpers', () => {
       expect(providerErrorHtml).not.toContain(t('stepTimeout.title', locale));
     },
   );
+
+  it('renders the live countdown strip the toolbar mirrors (M10)', () => {
+    const onRemainingChange = vi.fn();
+    const html = renderToStaticMarkup(
+      createElement(StepTimeoutDialog, {
+        event: { provider: 'DeepSeek', remainingMs: 5000, timedOut: false },
+        onClose: vi.fn(),
+        locale: 'en',
+        onRemainingChange,
+      }),
+    );
+
+    expect(html).toContain(formatI18n(t('stepTimeout.waiting', 'en'), { provider: 'DeepSeek', seconds: 5 }));
+  });
 
   it('reconciles loaded providers that appear while an overlay is open', () => {
     const guard = new OverlayGuardCounter();

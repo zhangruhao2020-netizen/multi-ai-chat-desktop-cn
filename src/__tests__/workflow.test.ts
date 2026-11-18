@@ -70,7 +70,7 @@ vi.mock('../host', () => ({
   },
 }));
 
-const providers: AIProvider[] = ['chatgpt', 'claude', 'gemini', 'grok'];
+const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'];
 
 function providerName(provider: AIProvider): string {
   return AI_PROVIDERS[provider].name;
@@ -290,9 +290,23 @@ describe('workflow engine', () => {
       publishBridgeMessage(done(provider, `${provider}-answer`));
     });
 
+    // Grok no longer holds a default seat in every mode (M12), so the
+    // standby role is seated explicitly: the test is about the standby block,
+    // not about which provider the defaults seat.
+    const key = 'presetId' in workflow ? workflow.presetId : workflow.mode;
+    const roles =
+      key === 'debate'
+        ? { ...DEFAULT_DEBATE_ROLES, judge: 'grok' as const }
+        : key === 'roundtable' || key === 'brainstorm'
+          ? { ...DEFAULT_ROUNDTABLE_ROLES, fourth: 'grok' as const }
+          : key === 'consult'
+            ? { ...DEFAULT_CONSULT_ROLES }
+            : { ...DEFAULT_CODING_ROLES };
+
     await expect(runWorkflow({
       ...workflow,
       text: 'stale standby must not run',
+      roles,
       activeProviders: activeProvidersForStandby('grok'),
     })).resolves.toEqual({
       ok: false,
@@ -318,8 +332,12 @@ describe('workflow engine', () => {
 
     const expected = Object.values(DEFAULT_DEBATE_ROLES).map((provider) => provider === standbyProvider ? 'meta' : provider);
     expect(vi.mocked(host.provider.send).mock.calls.map(([provider]) => provider)).toEqual(expected);
-    // Debate still runs four seats; DeepSeek and Doubao are the fifth and sixth active providers and hold no default debate seat.
-    expect(new Set([...expected, 'deepseek', 'doubao'])).toEqual(new Set(activeProviders));
+    // Debate still runs four seats; the active providers without a default
+    // debate seat (two of the six, whichever the rotation leaves out) plus
+    // the seated four cover the whole active lineup.
+    const unseatedDebate = activeProviders.filter((provider) => !expected.includes(provider));
+    expect(unseatedDebate).toHaveLength(activeProviders.length - 4);
+    expect(new Set([...expected, ...unseatedDebate])).toEqual(new Set(activeProviders));
   });
 
   it.each(providers.flatMap((standbyProvider) =>
@@ -355,8 +373,12 @@ describe('workflow engine', () => {
           ).flat();
     const expected = baseline.map((provider) => provider === standbyProvider ? 'meta' : provider);
     expect(vi.mocked(host.provider.send).mock.calls.map(([provider]) => provider)).toEqual(expected);
-    // These modes still run four seats; DeepSeek and Doubao are the fifth and sixth active providers and hold no default seat in them.
-    expect(new Set([...expected, 'deepseek', 'doubao'])).toEqual(new Set(activeProviders));
+    // These modes still run four seats; the active providers without a
+    // default seat in this mode (two of the six, whichever the rotation
+    // leaves out) plus the seated four cover the whole active lineup.
+    const unseated = activeProviders.filter((provider) => !expected.includes(provider));
+    expect(unseated).toHaveLength(activeProviders.length - 4);
+    expect(new Set([...expected, ...unseated])).toEqual(new Set(activeProviders));
     expect(getLastSnapshot()?.roleMap).toEqual(roles);
     expect(getLastSnapshot()?.steps.map((step) => step.provider)).toEqual(expected);
     expect(getLastSnapshot()?.steps.every((step) => step.status === 'done')).toBe(true);
@@ -538,7 +560,7 @@ describe('workflow engine', () => {
   });
 
   it('blocks Brainstorm before turn one when a required provider is unavailable', async () => {
-    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('gemini'), state('grok')]);
+    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('deepseek'), state('doubao'), state('gemini'), state('grok')]);
 
     await expect(
       runWorkflow({

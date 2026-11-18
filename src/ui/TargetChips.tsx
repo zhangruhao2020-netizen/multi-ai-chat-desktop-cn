@@ -32,6 +32,10 @@ export function TargetChips({
             type="button"
             disabled={!sendable || disabled}
             onClick={() => onChange(toggleTarget(selected, provider))}
+            // M9: brand color as the chip's left border — the same identity
+            // cue as the status-strip cards, visible in the default theme
+            // where the avatar is hidden.
+            style={{ borderLeftColor: AI_PROVIDERS[provider].color, borderLeftWidth: 3 }}
             className={`ai-sister-target-chip min-h-8 border px-2 py-1 text-xs ${
               active && sendable
                 ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200'

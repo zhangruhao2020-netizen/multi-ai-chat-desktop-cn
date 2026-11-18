@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_FREE_TARGET_PROVIDERS, DEFAULT_STANDBY_PROVIDER } from '../../shared/constants';
+import type { AIProvider } from '../../shared/types';
 import {
   DEFAULT_MODE_ROLE_ASSIGNMENTS,
   replaceModeRoleProvider,
@@ -49,8 +50,17 @@ describe('optional standby provider', () => {
     expect(settings.presentation.grok).toBe('chip');
     expect(settings.presentation.meta).toBe('side');
     expect(JSON.stringify(settings.modeRoles)).not.toContain('grok');
-    for (const roles of Object.values(settings.modeRoles)) {
-      expect(new Set(Object.values(roles))).toEqual(new Set(['chatgpt', 'claude', 'gemini', 'meta']));
+    // The vacated seats go to the newly activated standby (Meta); modes with
+    // no Grok seat keep their defaults. Since M12 the modes seat different
+    // rotated slices, so the repaired sets differ per mode.
+    expect(settings.modeRoles.consult.summary).toBe('meta');
+    expect(settings.modeRoles.coding.reviewer).toBe('meta');
+    expect(settings.modeRoles.debate).toEqual(DEFAULT_MODE_ROLE_ASSIGNMENTS.debate);
+    expect(settings.modeRoles.roundtable).toEqual(DEFAULT_MODE_ROLE_ASSIGNMENTS.roundtable);
+    const active = new Set(activeProvidersForStandby(settings.standbyProvider));
+    for (const roles of Object.values(settings.modeRoles) as Record<string, AIProvider>[]) {
+      expect(new Set(Object.values(roles)).size).toBe(4);
+      for (const provider of Object.values(roles)) expect(active.has(provider)).toBe(true);
     }
   });
 
@@ -75,6 +85,13 @@ describe('optional standby provider', () => {
 
     expect(JSON.stringify(swapped)).not.toContain('grok');
     expect(JSON.stringify(swapped)).toContain('meta');
-    expect(DEFAULT_MODE_ROLE_ASSIGNMENTS.debate.judge).toBe('grok');
+    // Grok holds the summary seat in consult and the reviewer seat in coding
+    // (M12 seating); both move to Meta while the other modes are untouched.
+    expect(DEFAULT_MODE_ROLE_ASSIGNMENTS.consult.summary).toBe('grok');
+    expect(DEFAULT_MODE_ROLE_ASSIGNMENTS.coding.reviewer).toBe('grok');
+    expect(swapped.consult.summary).toBe('meta');
+    expect(swapped.coding.reviewer).toBe('meta');
+    expect(swapped.debate).toEqual(DEFAULT_MODE_ROLE_ASSIGNMENTS.debate);
+    expect(swapped.roundtable).toEqual(DEFAULT_MODE_ROLE_ASSIGNMENTS.roundtable);
   });
 });

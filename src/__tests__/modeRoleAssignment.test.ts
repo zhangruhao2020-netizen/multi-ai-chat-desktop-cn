@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_FREE_TARGET_PROVIDERS } from '../../shared/constants';
+import type { AIProvider } from '../../shared/types';
 import {
   DEFAULT_MODE_ROLE_ASSIGNMENTS,
   assignModeRole,
@@ -17,11 +19,20 @@ const LEGACY_MODE_ROLES: ModeRoleAssignments = {
 };
 
 describe('normalizeModeRoleAssignments', () => {
-  it('uses every provider exactly once in each built-in four-role setup', () => {
-    const expected = ['chatgpt', 'claude', 'gemini', 'grok'];
-    for (const roles of Object.values(DEFAULT_MODE_ROLE_ASSIGNMENTS)) {
-      expect([...Object.values(roles)].sort()).toEqual(expected);
+  it('seats four distinct active providers per mode and every active provider somewhere (M12)', () => {
+    // The four modes seat different rotated slices of the active list, so no
+    // single mode covers all six — but each mode's four seats are distinct
+    // and every active provider holds at least one default seat.
+    const seated = new Set<AIProvider>();
+    for (const roles of Object.values(DEFAULT_MODE_ROLE_ASSIGNMENTS) as Record<string, AIProvider>[]) {
+      const providers = Object.values(roles);
+      expect(new Set(providers).size).toBe(4);
+      for (const provider of providers) {
+        expect(DEFAULT_FREE_TARGET_PROVIDERS).toContain(provider);
+        seated.add(provider);
+      }
     }
+    expect(seated).toEqual(new Set(DEFAULT_FREE_TARGET_PROVIDERS));
   });
 
   it('fills defaults for missing/garbage input', () => {

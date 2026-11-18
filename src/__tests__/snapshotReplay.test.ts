@@ -24,6 +24,7 @@ import {
 } from '../workflow/snapshot/replay';
 import type { AIProviderV2, ExecutionSnapshot, RedactedValueRef, SnapshotRedactionTier } from '../workflow/snapshot/types';
 import { resetWorkflowStateForTests } from '../workflow/state';
+import { activeProvidersForStandby } from '../ui/settingsModel';
 import { resetStepTimeoutForTests } from '../workflow/stepTimeout';
 import { resetWaitForResponseForTests } from '../workflow/waitForResponse';
 
@@ -66,7 +67,7 @@ vi.mock('../workflow/graph', async () => {
   };
 });
 
-const providers: AIProvider[] = ['chatgpt', 'claude', 'gemini', 'grok'];
+const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'];
 const HASH = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 function state(provider: AIProvider, sendable = true): ProviderState {
@@ -424,10 +425,12 @@ describe('snapshot replay', () => {
   });
 
   it('blocks a historical debate standby role even when its last connection state is Ready', async () => {
-    const snapshot = buildSnapshot();
+    // Grok no longer holds a default debate seat (M12), so the historical
+    // snapshot seats it explicitly to keep this test about the standby block.
+    const snapshot = buildSnapshot({ roleMap: { ...DEFAULT_DEBATE_ROLES, judge: 'grok' } });
     const originalRoleMap = { ...snapshot.roleMap };
     await expect(replaySnapshot({ snapshot }, {
-      activeProviders: ['chatgpt', 'claude', 'gemini', 'meta'],
+      activeProviders: activeProvidersForStandby('grok'),
     })).resolves.toEqual({
       ok: false,
       blocked: 'preflight',
@@ -439,7 +442,9 @@ describe('snapshot replay', () => {
     expect(host.provider.send).not.toHaveBeenCalled();
   });
 
-  it.each(providers)('replays recorded Meta debate roles unchanged after replacing %s', async (standbyProvider) => {
+  // Only providers seated in the default debate roles can be replaced by
+  // Meta there; Grok and Gemini hold no default debate seat since M12.
+  it.each([...new Set(Object.values(DEFAULT_DEBATE_ROLES))])('replays recorded Meta debate roles unchanged after replacing %s', async (standbyProvider) => {
     const activeProviders = [...providers.filter((provider) => provider !== standbyProvider), 'meta' as const];
     const roleMap = Object.fromEntries(Object.entries(DEFAULT_DEBATE_ROLES).map(([role, provider]) =>
       [role, provider === standbyProvider ? 'meta' : provider],
@@ -550,7 +555,7 @@ describe('snapshot replay', () => {
   });
 
   it('blocks on serial preflight with current unavailable sessions and does not execute', async () => {
-    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('gemini'), state('grok')]);
+    vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('deepseek'), state('doubao'), state('gemini'), state('grok')]);
 
     await expect(replaySnapshot({ snapshot: buildSnapshot() }, {})).resolves.toEqual({
       ok: false,

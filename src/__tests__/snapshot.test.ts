@@ -47,7 +47,7 @@ vi.mock('../host', () => ({
   },
 }));
 
-const providers: AIProvider[] = ['chatgpt', 'claude', 'gemini', 'grok'];
+const providers: AIProvider[] = ['chatgpt', 'claude', 'deepseek', 'doubao', 'gemini', 'grok'];
 const SNAPSHOT_ID_PATTERN = /^snapshot-[0-9a-f-]{36}$/;
 
 function state(provider: AIProvider, sendable = true): ProviderState {

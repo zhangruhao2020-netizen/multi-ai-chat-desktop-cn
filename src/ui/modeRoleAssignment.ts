@@ -160,8 +160,8 @@ export function replaceModeRoleProvider(
  * Repair corrupted or pre-feature settings without ever assigning standby.
  * A vacated seat goes to the default standby provider first: it is the
  * provider a standby swap activates. Without this preference an
- * already-active provider with no default seat (DeepSeek) would claim the
- * seat before the swapped-in provider.
+ * already-active provider that happens to hold no seat in that mode would
+ * claim the seat before the swapped-in provider.
  */
 export function keepModeRolesWithinProviders(
   assignments: ModeRoleAssignments,

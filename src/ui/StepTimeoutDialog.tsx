@@ -20,10 +20,14 @@ export function StepTimeoutDialog({
   event,
   onClose,
   locale,
+  onRemainingChange,
 }: {
   event: StepTimeoutDialogState;
   onClose: () => void;
   locale: Locale;
+  // M10: reports the live countdown so the caller can mirror it somewhere
+  // that never scrolls away (the conversation toolbar status line).
+  onRemainingChange?: (remainingMs: number) => void;
 }) {
   const [remainingMs, setRemainingMs] = useState(event.remainingMs);
 
@@ -31,11 +35,14 @@ export function StepTimeoutDialog({
     if (event.timedOut) return;
     const startedAt = Date.now();
     setRemainingMs(event.remainingMs);
+    onRemainingChange?.(event.remainingMs);
     const timer = window.setInterval(() => {
-      setRemainingMs(Math.max(0, event.remainingMs - (Date.now() - startedAt)));
+      const next = Math.max(0, event.remainingMs - (Date.now() - startedAt));
+      setRemainingMs(next);
+      onRemainingChange?.(next);
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [event.provider, event.remainingMs, event.timedOut]);
+  }, [event.provider, event.remainingMs, event.timedOut, onRemainingChange]);
 
   if (!event.timedOut) {
     return (
