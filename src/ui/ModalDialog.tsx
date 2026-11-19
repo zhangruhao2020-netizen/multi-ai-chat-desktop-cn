@@ -15,6 +15,12 @@ export function ModalDialog({
   children,
   onEscape,
   onBackdrop,
+  // L2: the X closes the dialog. Defaults to the Escape handler so every
+  // dialog keeps one close action; dialogs with their own header close
+  // button (Settings, process-trace detail) opt out via hideCloseButton.
+  onClose,
+  hideCloseButton = false,
+  closeLabel = 'Close',
   panelClassName,
 }: {
   titleId: string;
@@ -22,6 +28,9 @@ export function ModalDialog({
   children: ReactNode;
   onEscape?: () => void;
   onBackdrop?: () => void;
+  onClose?: () => void;
+  hideCloseButton?: boolean;
+  closeLabel?: string;
   panelClassName: string;
 }) {
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -71,6 +80,8 @@ export function ModalDialog({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onEscape]);
 
+  const handleClose = onClose ?? onEscape;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
@@ -85,8 +96,19 @@ export function ModalDialog({
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         tabIndex={-1}
-        className={panelClassName}
+        className={`${panelClassName} relative`}
       >
+        {!hideCloseButton && handleClose ? (
+          <button
+            type="button"
+            aria-label={closeLabel}
+            title={closeLabel}
+            onClick={handleClose}
+            className="absolute right-3 top-3 flex h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          >
+            <span aria-hidden="true" className="text-lg leading-none">×</span>
+          </button>
+        ) : null}
         {children}
       </div>
     </div>

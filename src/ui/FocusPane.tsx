@@ -470,7 +470,7 @@ function FocusStage({
           idleText={showLoginCta ? t('provider.signInPrompt') : state.dom === 'ready' ? t('provider.centerReady') : t('provider.checking')}
         />
       ) : state.webview === 'loaded' ? (
-        <div className="grid flex-1 place-items-center p-3 text-xs text-zinc-500 dark:text-zinc-500">
+        <div className="grid flex-1 place-items-center p-3 text-xs text-zinc-500 dark:text-zinc-400">
           {hidden ? t('provider.nativeWebviewHidden') : t('provider.nativeWebviewCentered')}
         </div>
       ) : null}
@@ -498,7 +498,7 @@ export function TextCenterView({
       <div className="grid flex-1 place-items-center p-3">
         <div className="ai-sister-thinking-state flex items-center gap-3">
           {provider ? <AiSisterAvatar provider={provider} size="lg" active /> : null}
-          <div className="whitespace-pre-wrap text-sm italic text-zinc-500 dark:text-zinc-500">{t('chat.thinking')}</div>
+          <div className="whitespace-pre-wrap text-sm italic text-zinc-500 dark:text-zinc-400">{t('chat.thinking')}</div>
         </div>
       </div>
     );
@@ -545,7 +545,7 @@ function StatusStrip({
     <section aria-labelledby="provider-connections-title" className="ai-sister-connections mt-3 shrink-0 overflow-x-auto overflow-y-hidden rounded border border-zinc-200 bg-white px-2 py-2 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mb-2 flex items-baseline justify-between gap-3 px-0.5">
         <h2 id="provider-connections-title" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{t('provider.connections')}</h2>
-        <span className="text-[0.6875rem] text-zinc-500 dark:text-zinc-400">{t('provider.connectionsHint')}</span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('provider.connectionsHint')}</span>
       </div>
       <div className="ai-sister-connection-grid grid grid-cols-3 gap-1.5">
         {providers.map((provider) => (
@@ -636,7 +636,7 @@ function StatusStripItem({
           <span className="block truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">{AI_PROVIDERS[provider].name}</span>
           <span className="mt-1 flex min-w-0 items-center gap-1">
             <span className={`h-2 w-2 shrink-0 rounded-full ${status.dotClassName}`} aria-hidden="true" />
-            <span className={`min-w-0 truncate text-[0.6875rem] ${status.className}`}>{openingProvider === provider ? t('connection.connecting') : status.label}</span>
+            <span className={`min-w-0 truncate text-xs ${status.className}`}>{openingProvider === provider ? t('connection.connecting') : status.label}</span>
           </span>
         </span>
       </span>
@@ -651,14 +651,14 @@ export function AdapterAccessPanel({ id, summary }: { id: string; summary: Adapt
     <section id={id} className="border-b border-sky-300 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/30 px-3 py-3 text-xs text-zinc-700 dark:text-zinc-300">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t('provider.access.heading')}</h3>
-        <span className="shrink-0 text-[0.6875rem] text-sky-700 dark:text-sky-200">{summary.providerName}</span>
+        <span className="shrink-0 text-xs text-sky-700 dark:text-sky-200">{summary.providerName}</span>
       </div>
       <div className="grid gap-3">
         <PermissionGroup title={t('provider.access.readTitle')} lines={summary.reads} />
         <PermissionGroup title={t('provider.access.writeTitle')} lines={summary.writes} />
         <PermissionGroup title={t('provider.access.cannotTitle')} lines={summary.cannot} />
       </div>
-      {summary.note ? <p className="mt-3 border-t border-sky-300 dark:border-sky-900 pt-2 text-[0.6875rem] leading-relaxed text-zinc-500 dark:text-zinc-500">{summary.note}</p> : null}
+      {summary.note ? <p className="mt-3 border-t border-sky-300 dark:border-sky-900 pt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{summary.note}</p> : null}
     </section>
   );
 }
@@ -675,7 +675,7 @@ function PermissionGroup({ title, lines }: { title: string; lines: AdapterPermis
               <ul className="mt-1 space-y-1 border-l border-zinc-300 dark:border-zinc-700 pl-2">
                 {line.selectors.map((selector) => (
                   <li key={selector}>
-                    <code className="break-all text-[0.6875rem] text-sky-700 dark:text-sky-200">{selector}</code>
+                    <code className="break-all text-xs text-sky-700 dark:text-sky-200">{selector}</code>
                   </li>
                 ))}
               </ul>

@@ -58,7 +58,7 @@ import { makeFileDragGuard } from './ui/fileDrop';
 import { PreflightDialog } from './ui/PreflightDialog';
 import { PresetCatalog } from './ui/PresetCatalog';
 import { createProcessTrace, reduceProcessTraceEvent, settleProcessTrace, type ProcessTraceState } from './ui/processTraceModel';
-import { ReplayPanel, type ReplaySource } from './ui/ReplayPanel';
+import { ReplayPanel, type ReplayPanelHandle, type ReplaySource } from './ui/ReplayPanel';
 import { SessionCheckpointNotice } from './ui/SessionCheckpointNotice';
 import { loadSessionSidebarCollapsed, saveSessionSidebarCollapsed } from './ui/sessionSidebarPreference';
 import { StepTimeoutDialog, type StepTimeoutDialogState } from './ui/StepTimeoutDialog';
@@ -395,7 +395,7 @@ export default function App() {
   const workflowExecutionGenerationRef = useRef(0);
   const workflowExecutionTailRef = useRef<Promise<void>>(Promise.resolve());
   const pullBridge = useRef(new Map<AIProvider, PullBridgeState>());
-  const replayPanelRef = useRef<ReplayPanel | null>(null);
+  const replayPanelRef = useRef<ReplayPanelHandle | null>(null);
   const targets = targetSelection.targets;
   const activeProviders = useMemo(
     () => activeProvidersForStandby(appSettings.standbyProvider),
@@ -2359,13 +2359,13 @@ export const ChatMessage = memo(function ChatMessage({
     >
       <div className="mb-1 flex items-center gap-2">
         {isProvider ? <AiSisterAvatar provider={p as AIProvider} active={thinking} size="md" /> : null}
-        <div className="min-w-0 flex-1 truncate text-xs uppercase text-zinc-500 dark:text-zinc-500">
+        <div className="min-w-0 flex-1 truncate text-xs uppercase text-zinc-500 dark:text-zinc-400">
           {bubbleAuthorLabel(message)}
           {message.modeRole ? ` · ${message.modeRole}` : ''}
           {statusLabel ? ` ${statusLabel}` : ''}
         </div>
         {createdAt !== undefined ? (
-          <time className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500" dateTime={new Date(createdAt).toISOString()} title={timeTitle}>
+          <time className="shrink-0 text-xs text-zinc-400" dateTime={new Date(createdAt).toISOString()} title={timeTitle}>
             {timeLabel}
           </time>
         ) : null}
@@ -2377,7 +2377,7 @@ export const ChatMessage = memo(function ChatMessage({
         />
       </div>
       {thinking ? (
-        <div className="whitespace-pre-wrap text-sm italic text-zinc-500 dark:text-zinc-500">{translateKey('chat.thinking', locale)}</div>
+        <div className="whitespace-pre-wrap text-sm italic text-zinc-500 dark:text-zinc-400">{translateKey('chat.thinking', locale)}</div>
       ) : (
         <div className="text-sm">
           <MarkdownText text={message.content} locale={locale} />

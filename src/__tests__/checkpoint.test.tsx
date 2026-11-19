@@ -1,6 +1,19 @@
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// CheckpointCard uses hooks (L6 auto-grow effect) but the tests call it as a
+// plain function, so the hook calls need a stub dispatcher like the one in
+// InputBar.test.tsx. The effect is a no-op here; the ref just needs an object.
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    useEffect: () => undefined,
+    useRef: (initial: unknown) => ({ current: initial }),
+  };
+});
+
 import { resetBusForTests } from '../bridge/bus';
 import { t } from '../i18n/t';
 import { awaitCheckpoint, resetCheckpointForTests, type PendingCheckpoint } from '../workflow/checkpoint';
@@ -94,6 +107,11 @@ describe('CheckpointCard', () => {
     propsOf(confirm).onClick?.();
 
     await expect(decision).resolves.toEqual({ action: 'confirm', draft: 'edited draft' });
+  });
+
+  it('shows a character count for the draft', () => {
+    const tree = CheckpointCard({ checkpoint: pendingCheckpoint(), draft: 'edited draft', onDraftChange: vi.fn() });
+    expect(renderToStaticMarkup(tree)).toContain('12 characters');
   });
 
   it('resolves skip through the checkpoint registry', async () => {

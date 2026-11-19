@@ -71,6 +71,7 @@ export function StepTimeoutDialog({
       titleId="step-timeout-title"
       descriptionId="step-timeout-description"
       onEscape={() => choose('cancel')}
+      closeLabel={t('settings.close', locale)}
       panelClassName="w-full max-w-sm rounded-lg border border-amber-300 bg-white p-4 shadow-xl dark:border-amber-700 dark:bg-zinc-950"
     >
         <h2 id="step-timeout-title" className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t(titleKey, locale)}</h2>

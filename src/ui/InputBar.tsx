@@ -39,6 +39,10 @@ export function InputBar({
   const [attachmentError, setAttachmentError] = useState<string | undefined>();
   const [dropActive, setDropActive] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // L4: the composer auto-grows to 200px by default; expanding lifts the cap
+  // to 400px so long pasted prompts stay visible without internal scrolling.
+  const [expanded, setExpanded] = useState(false);
+  const composerMaxHeight = expanded ? 400 : 200;
   const attachmentChipsRef = useRef<AttachmentChip[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,8 +53,8 @@ export function InputBar({
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
-  }, [text]);
+    textarea.style.height = `${Math.min(textarea.scrollHeight, composerMaxHeight)}px`;
+  }, [text, expanded, composerMaxHeight]);
 
   const commitAttachmentChips = (chips: AttachmentChip[]) => {
     attachmentChipsRef.current = chips;
@@ -196,6 +200,17 @@ export function InputBar({
           disabled={disabled || isSubmitting}
           rows={2}
         />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0 self-start px-2"
+          aria-expanded={expanded}
+          aria-label={expanded ? t('input.collapseComposer', locale) : t('input.expandComposer', locale)}
+          title={expanded ? t('input.collapseComposer', locale) : t('input.expandComposer', locale)}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          <span aria-hidden="true">{expanded ? '⤡' : '⤢'}</span>
+        </Button>
         <input
           ref={fileInputRef}
           className="hidden"
@@ -232,17 +247,17 @@ export function InputBar({
                 chip.phase === 'error'
                   ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200'
                   : chip.phase === 'reading'
-                    ? 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-500 dark:text-zinc-500'
+                    ? 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-500 dark:text-zinc-400'
                     : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300'
               }`}
             >
               <span className="max-w-48 truncate" title={attachmentChipName(chip)}>
                 {attachmentChipName(chip)}
               </span>
-              <span className="shrink-0 text-zinc-500 dark:text-zinc-500">
+              <span className="shrink-0 text-zinc-500 dark:text-zinc-400">
                 {formatAttachmentSize(attachmentChipSize(chip), locale)}
               </span>
-              {chip.phase === 'reading' ? <span className="shrink-0 text-zinc-500 dark:text-zinc-500">{t('input.reading', locale)}</span> : null}
+              {chip.phase === 'reading' ? <span className="shrink-0 text-zinc-500 dark:text-zinc-400">{t('input.reading', locale)}</span> : null}
               {chip.phase === 'error' ? (
                 <span className="max-w-64 truncate text-red-700 dark:text-red-300" title={chip.message}>
                   {chip.message}

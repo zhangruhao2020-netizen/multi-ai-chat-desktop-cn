@@ -120,6 +120,9 @@ export function SettingsModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<SettingsError | undefined>();
   const [updateCheck, setUpdateCheck] = useState<UpdateCheckState>({ status: 'idle' });
+  // L5: the diagnostics section mounts only while its <details> is open, so
+  // its 15s refresh timer does not run while the section is collapsed.
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const closeTimerRef = useRef<number | undefined>();
   const settingsPersistenceRef = useRef(createSettingsPersistence(host.settings));
   const fontSizeDebounceRef = useRef<TrailingDebounce<PendingFontSizeUpdate> | undefined>(undefined);
@@ -386,6 +389,7 @@ export function SettingsModal({
       titleId="settings-title"
       onEscape={closeSettings}
       onBackdrop={closeSettings}
+      hideCloseButton
       panelClassName="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-950"
     >
         <div className="mb-4 flex shrink-0 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
@@ -437,7 +441,7 @@ export function SettingsModal({
                   <option value="de">{t('settings.language.de')}</option>
                 </select>
               </label>
-              <p id="settings-response-language-description" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-500">
+              <p id="settings-response-language-description" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                 {t('settings.responseLanguageDescription')}
               </p>
             </section>
@@ -483,7 +487,7 @@ export function SettingsModal({
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   {t('settings.providers')}
                 </h3>
-                <p id="settings-providers-description" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-500">
+                <p id="settings-providers-description" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                   {t('settings.providersDescription')}
                 </p>
               </div>
@@ -509,7 +513,7 @@ export function SettingsModal({
                 </select>
               </label>
               {providerSelectionDisabled ? (
-                <p id="settings-providers-unavailable" className="text-xs text-zinc-500 dark:text-zinc-500">
+                <p id="settings-providers-unavailable" className="text-xs text-zinc-500 dark:text-zinc-400">
                   {t('input.workflowRunning')}
                 </p>
               ) : null}
@@ -540,7 +544,7 @@ export function SettingsModal({
                       <option key={option.key} value={option.key}>{option.label}</option>
                     ))}
                   </select>
-                  <span className="mt-1 block text-xs leading-relaxed text-zinc-500 dark:text-zinc-500">
+                  <span className="mt-1 block text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                     {t('settings.geminiModelDescription')}
                   </span>
                 </label>
@@ -549,7 +553,7 @@ export function SettingsModal({
 
             <section className="space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-4">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{t('settings.modeRoles')}</h3>
-              <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-500">{t('settings.modeRolesDescription')}</p>
+              <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{t('settings.modeRolesDescription')}</p>
               {orderedRoleModes.map((roleMode) => (
                 <details
                   key={roleMode}
@@ -663,7 +667,7 @@ export function SettingsModal({
                     <span className="block text-sm font-medium text-zinc-800 dark:text-zinc-200">{t('settings.advanced')}</span>
                     <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">{t('settings.advancedDescription')}</span>
                   </span>
-                  <span className="text-zinc-500 transition group-open:rotate-180" aria-hidden="true">⌄</span>
+                  <span className="text-zinc-500 transition group-open:rotate-180 dark:text-zinc-400" aria-hidden="true">⌄</span>
                 </span>
               </summary>
               <div className="mt-3 space-y-4 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800">
@@ -681,15 +685,18 @@ export function SettingsModal({
                   <summary className="cursor-pointer text-xs font-medium text-zinc-700 dark:text-zinc-300">{t('provider.access')}</summary>
                   <AccessTransparencySection />
                 </details>
-                <details className="group/diagnostics rounded border border-zinc-200 px-3 py-2 dark:border-zinc-800">
+                <details
+                  className="group/diagnostics rounded border border-zinc-200 px-3 py-2 dark:border-zinc-800"
+                  onToggle={(event) => setDiagnosticsOpen(event.currentTarget.open)}
+                >
                   <summary className="cursor-pointer text-xs font-medium text-zinc-700 dark:text-zinc-300">{t('settings.diagnostics')}</summary>
-                  <DiagnosticsSection providerStates={providerStates} settings={draft} />
+                  {diagnosticsOpen ? <DiagnosticsSection providerStates={providerStates} settings={draft} /> : null}
                 </details>
               </div>
             </details>
           </div>
         ) : (
-          <div className="py-8 text-sm text-zinc-500 dark:text-zinc-500">{t('settings.loading')}</div>
+          <div className="py-8 text-sm text-zinc-500 dark:text-zinc-400">{t('settings.loading')}</div>
         )}
 
         {error ? (
@@ -698,7 +705,7 @@ export function SettingsModal({
             {error.detail ? (
               <details className="mt-2">
                 <summary className="cursor-pointer font-medium">{t('settings.technicalDetails')}</summary>
-                <code className="mt-1 block break-words text-[0.6875rem] opacity-80">{error.detail}</code>
+                <code className="mt-1 block break-words text-xs opacity-80">{error.detail}</code>
               </details>
             ) : null}
           </div>
@@ -879,7 +886,7 @@ export function DiagnosticsSection({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{t('settings.diagnostics')}</h3>
-          <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">{t('settings.diagnosticsDescription')}</div>
+          <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{t('settings.diagnosticsDescription')}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
@@ -938,7 +945,7 @@ export function DiagnosticsSection({
             <div key={provider} className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{providerName(provider)}</span>
-                <span className="text-zinc-500 dark:text-zinc-500">{lastEvent ? formatRelativeTime(lastEvent, now) : t('settings.noEvents')}</span>
+                <span className="text-zinc-500 dark:text-zinc-400">{lastEvent ? formatRelativeTime(lastEvent, now) : t('settings.noEvents')}</span>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-zinc-600 dark:text-zinc-400">
                 <StatusPair label={t('settings.bridge')} value={state.bridge ?? 'unknown'} />
@@ -955,7 +962,7 @@ export function DiagnosticsSection({
 
       <div className="max-h-72 overflow-auto border border-zinc-200 dark:border-zinc-800">
         {recentEvents.length === 0 ? (
-          <div className="p-3 text-xs text-zinc-500 dark:text-zinc-500">{t('settings.noDiagnosticEvents')}</div>
+          <div className="p-3 text-xs text-zinc-500 dark:text-zinc-400">{t('settings.noDiagnosticEvents')}</div>
         ) : (
           <ol className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {recentEvents.map((event, index) => (
@@ -971,7 +978,7 @@ export function DiagnosticsSection({
 function StatusPair({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <span className="text-zinc-500 dark:text-zinc-500">{label}: </span>
+      <span className="text-zinc-500 dark:text-zinc-400">{label}: </span>
       <span className="break-words text-zinc-800 dark:text-zinc-200">{value}</span>
     </div>
   );
@@ -980,13 +987,13 @@ function StatusPair({ label, value }: { label: string; value: string }) {
 function EventLogRow({ event, now }: { event: EventLogEvent; now: number }) {
   return (
     <li className="px-3 py-2 text-xs">
-      <div className="flex flex-wrap items-center gap-2 text-zinc-500 dark:text-zinc-500">
+      <div className="flex flex-wrap items-center gap-2 text-zinc-500 dark:text-zinc-400">
         <span>{formatRelativeTime(event.ts, now)}</span>
-        <span className="border border-zinc-300 dark:border-zinc-700 px-1.5 py-0.5 text-[0.6875rem] uppercase text-zinc-700 dark:text-zinc-300">{event.kind}</span>
+        <span className="border border-zinc-300 dark:border-zinc-700 px-1.5 py-0.5 text-xs uppercase text-zinc-700 dark:text-zinc-300">{event.kind}</span>
         {event.provider ? <span className="text-sky-700 dark:text-sky-300">{providerName(event.provider)}</span> : null}
       </div>
       <div className="mt-1 break-words text-zinc-800 dark:text-zinc-200">{event.summary}</div>
-      {event.detail ? <code className="mt-1 block break-words text-[0.6875rem] text-zinc-500 dark:text-zinc-500">{JSON.stringify(event.detail)}</code> : null}
+      {event.detail ? <code className="mt-1 block break-words text-xs text-zinc-500 dark:text-zinc-400">{JSON.stringify(event.detail)}</code> : null}
     </li>
   );
 }

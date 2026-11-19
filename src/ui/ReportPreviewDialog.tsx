@@ -51,6 +51,7 @@ export function ReportPreviewDialog({
       titleId="report-preview-title"
       onEscape={cancel}
       onBackdrop={cancel}
+      closeLabel={translateKey('settings.close', locale)}
       panelClassName="max-h-[92vh] w-full max-w-2xl overflow-auto rounded-lg border border-zinc-300 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-950"
     >
         <div className="mb-4 border-b border-zinc-200 dark:border-zinc-800 pb-3">

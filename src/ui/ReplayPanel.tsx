@@ -1,4 +1,4 @@
-import { Component, type ChangeEvent, type FormEvent } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { AI_PROVIDERS } from '../../shared/constants';
 import type { AIProvider } from '../../shared/types';
 import type { I18nKey } from '../i18n/keys';
@@ -72,283 +72,213 @@ export function sortStoredSnapshotsNewestFirst(snapshots: StoredSnapshotInfo[]):
   return [...snapshots].sort((a, b) => snapshotTime(b) - snapshotTime(a));
 }
 
-export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
-  state: ReplayPanelState = initialState;
+// L5: converted from a class component to a function component. App drives
+// replays imperatively (startup session checkpoint), so the panel exposes its
+// actions through a ref handle instead of class instance methods.
+export interface ReplayPanelHandle {
+  startReplay: (source: ReplaySource, options?: ReplayRunOptions) => Promise<ReplayResult | undefined>;
+  refreshStoredSnapshots: () => Promise<void>;
+  deleteStoredSnapshot: (snapshotId: string) => Promise<void>;
+}
 
-  private mounted = false;
-  private loginRequestGeneration = 0;
-  private loginInFlight = false;
+export const ReplayPanel = forwardRef<ReplayPanelHandle, ReplayPanelProps>(function ReplayPanel(props, ref) {
+  const [state, setState] = useState<ReplayPanelState>(initialState);
+  // Async flows read the latest state (e.g. the question typed while a replay
+  // was in flight); a ref mirror keeps those reads fresh without stale closures.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const loginRequestGeneration = useRef(0);
+  const loginInFlight = useRef(false);
 
-  componentDidMount(): void {
-    this.mounted = true;
-    void this.refreshStoredSnapshots();
-  }
+  const locale = props.locale ?? 'en';
+  const translate = (key: I18nKey): string => t(key, locale);
 
-  componentWillUnmount(): void {
-    this.mounted = false;
-    this.loginRequestGeneration += 1;
-  }
+  const updateState = (patch: Partial<ReplayPanelState>): void => {
+    setState((current) => ({ ...current, ...patch }));
+  };
 
-  async refreshStoredSnapshots(): Promise<void> {
-    this.updateState({ loadingStored: true, listError: undefined });
+  const isInactiveStandby = (provider: AIProvider): boolean => {
+    return isInactiveStandbyProvider(provider, props.activeProviders);
+  };
+
+  const refreshStoredSnapshots = useCallback(async (): Promise<void> => {
+    setState((current) => ({ ...current, loadingStored: true, listError: undefined }));
     try {
       const storedSnapshots = sortStoredSnapshotsNewestFirst(await host.snapshot.list());
-      this.updateState({ storedSnapshots, loadingStored: false });
+      setState((current) => ({ ...current, storedSnapshots, loadingStored: false }));
     } catch (error) {
-      this.updateState({
-        loadingStored: false,
-        listError: errorMessage(error),
-      });
+      setState((current) => ({ ...current, loadingStored: false, listError: errorMessage(error) }));
     }
-  }
+  }, []);
 
-  async startReplay(source: ReplaySource, options: ReplayRunOptions = {}): Promise<ReplayResult | undefined> {
-    this.loginRequestGeneration += 1;
+  useEffect(() => {
+    void refreshStoredSnapshots();
+    return () => {
+      // Invalidate in-flight login attempts when the panel unmounts.
+      loginRequestGeneration.current += 1;
+    };
+  }, [refreshStoredSnapshots]);
+
+  const planReplayForSource = async (source: ReplaySource, options: ReplayRunOptions): Promise<ReplayPlan | undefined> => {
+    try {
+      if (source.kind === 'last') return planReplay(source.snapshot, { replayWithCurrentGraph: options.replayWithCurrentGraph });
+      const json = await host.snapshot.load(source.snapshotId);
+      if (json === null) return undefined;
+      return planReplay(parseStoredSnapshot(json), { replayWithCurrentGraph: options.replayWithCurrentGraph });
+    } catch {
+      return undefined;
+    }
+  };
+
+  const inputForSource = (source: ReplaySource, question?: string): Parameters<typeof replaySnapshot>[0] => {
+    if (source.kind === 'last') return question ? { snapshot: source.snapshot, question } : { snapshot: source.snapshot };
+    return question ? { snapshotId: source.snapshotId, question } : { snapshotId: source.snapshotId };
+  };
+
+  const showBlockedResult = (source: ReplaySource, result: Extract<ReplayResult, { ok: false }>): void => {
+    updateState({
+      block: {
+        reason: result.blocked,
+        source,
+        detail: result.detail,
+        preflight: result.preflight,
+      },
+      question: result.blocked === 'question-required' ? stateRef.current.question : '',
+    });
+  };
+
+  const startReplay = async (source: ReplaySource, options: ReplayRunOptions = {}): Promise<ReplayResult | undefined> => {
+    loginRequestGeneration.current += 1;
     const busyKey = sourceKey(source);
     const question = options.question?.trim();
-    this.updateState({ busyKey, notice: undefined, block: undefined });
+    updateState({ busyKey, notice: undefined, block: undefined });
 
     let planned: ReplayPlan | undefined;
     let willRun = false;
     try {
-      planned = await this.planReplayForSource(source, options);
+      planned = await planReplayForSource(source, options);
       if (planned && !planned.blocked && (!planned.needsQuestion || question)) {
         willRun = true;
-        this.props.onReplayWillRun?.({
+        props.onReplayWillRun?.({
           ...planned,
           question: planned.question ?? question,
         });
       }
 
-      const result = await replaySnapshot(this.inputForSource(source, question), {
+      const result = await replaySnapshot(inputForSource(source, question), {
         replayWithCurrentGraph: options.replayWithCurrentGraph,
-        onSnapshotComplete: this.props.onSnapshotComplete,
-        locale: this.locale(),
-        responseLanguagePolicy: this.props.responseLanguagePolicy,
-        activeProviders: this.props.activeProviders,
+        onSnapshotComplete: props.onSnapshotComplete,
+        locale,
+        responseLanguagePolicy: props.responseLanguagePolicy,
+        activeProviders: props.activeProviders,
       });
 
       if (result.ok) {
-        if (!willRun) this.props.onReplayWillRun?.(result.plan);
-        this.updateState({
+        if (!willRun) props.onReplayWillRun?.(result.plan);
+        updateState({
           block: undefined,
           question: '',
           notice: {
             kind: 'ok',
             text: result.newSnapshotId
-              ? formatI18n(this.t('replay.completedWithSnapshot'), { snapshotId: result.newSnapshotId })
-              : this.t('replay.completed'),
+              ? formatI18n(translate('replay.completedWithSnapshot'), { snapshotId: result.newSnapshotId })
+              : translate('replay.completed'),
           },
         });
-        await this.refreshStoredSnapshots();
+        await refreshStoredSnapshots();
         return result;
       }
 
-      this.showBlockedResult(source, result);
+      showBlockedResult(source, result);
       return result;
     } catch (error) {
-      this.updateState({
+      updateState({
         notice: { kind: 'error', text: errorMessage(error) },
       });
       return undefined;
     } finally {
-      this.updateState({ busyKey: undefined });
-      this.props.onReplaySettled?.();
+      updateState({ busyKey: undefined });
+      props.onReplaySettled?.();
     }
-  }
+  };
 
-  private async openProviderLogin(provider: AIProvider): Promise<void> {
-    if (this.loginInFlight || this.isInactiveStandby(provider)) return;
-    this.loginInFlight = true;
-    const generation = ++this.loginRequestGeneration;
-    const block = this.state.block;
-    this.updateState({ notice: undefined });
+  const openProviderLogin = async (provider: AIProvider): Promise<void> => {
+    if (loginInFlight.current || isInactiveStandby(provider)) return;
+    loginInFlight.current = true;
+    const generation = ++loginRequestGeneration.current;
+    const block = stateRef.current.block;
+    updateState({ notice: undefined });
     try {
-      if (this.props.onOpenLogin) await this.props.onOpenLogin(provider);
+      if (props.onOpenLogin) await props.onOpenLogin(provider);
       else await host.provider.openLogin(provider);
     } catch {
-      if (generation !== this.loginRequestGeneration || this.state.block !== block) return;
-      this.updateState({
+      if (generation !== loginRequestGeneration.current || stateRef.current.block !== block) return;
+      updateState({
         notice: {
           kind: 'error',
-          text: formatI18n(this.t('provider.openFailed'), { provider: providerName(provider) }),
+          text: formatI18n(translate('provider.openFailed'), { provider: providerName(provider) }),
           retryLoginProvider: provider,
         },
       });
     } finally {
-      this.loginInFlight = false;
+      loginInFlight.current = false;
     }
-  }
+  };
 
-  private openSettings(): void {
-    this.loginRequestGeneration += 1;
-    this.props.onOpenSettings?.();
-  }
+  const openSettings = (): void => {
+    loginRequestGeneration.current += 1;
+    props.onOpenSettings?.();
+  };
 
-  private isInactiveStandby(provider: AIProvider): boolean {
-    return isInactiveStandbyProvider(provider, this.props.activeProviders);
-  }
-
-  async deleteStoredSnapshot(snapshotId: string): Promise<void> {
-    this.loginRequestGeneration += 1;
+  const deleteStoredSnapshot = async (snapshotId: string): Promise<void> => {
+    loginRequestGeneration.current += 1;
     const busyKey = `delete:${snapshotId}`;
-    this.updateState({ busyKey, notice: undefined });
+    updateState({ busyKey, notice: undefined });
     try {
       await host.snapshot.delete(snapshotId);
-      this.updateState({ notice: { kind: 'ok', text: this.t('replay.snapshotDeleted') } });
-      await this.refreshStoredSnapshots();
+      updateState({ notice: { kind: 'ok', text: translate('replay.snapshotDeleted') } });
+      await refreshStoredSnapshots();
     } catch (error) {
-      this.updateState({ notice: { kind: 'error', text: errorMessage(error) } });
+      updateState({ notice: { kind: 'error', text: errorMessage(error) } });
     } finally {
-      this.updateState({ busyKey: undefined });
+      updateState({ busyKey: undefined });
     }
-  }
+  };
 
-  render() {
-    const lastSnapshot = getLastSnapshot();
-    const { storedSnapshots, loadingStored, listError, busyKey, block, question, notice } = this.state;
-    const retryLoginProvider = notice?.retryLoginProvider;
+  const submitQuestion = (event: FormEvent<HTMLFormElement>, block: ReplayBlockState): void => {
+    event.preventDefault();
+    const question = stateRef.current.question.trim();
+    if (!question) return;
+    void startReplay(block.source, { question });
+  };
 
-    return (
-      <section aria-label={this.t('replay.snapshotReplay')} className="mt-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
-        <div className="mb-3">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{this.t('replay.snapshotReplay')}</h3>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-500">
-            {this.t('replay.description')}
-          </p>
-        </div>
+  const updateQuestion = (event: ChangeEvent<HTMLInputElement>): void => {
+    updateState({ question: event.target.value });
+  };
 
-        <div className="grid gap-3">
-          <section className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h4 className="text-xs font-semibold uppercase text-zinc-700 dark:text-zinc-300">{this.t('replay.lastRun')}</h4>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-                  {lastSnapshot ? `${lastSnapshot.graphId} - ${localTime(lastSnapshot.createdAt, this.locale())}` : this.t('replay.noInMemorySnapshot')}
-                </p>
-              </div>
-              {lastSnapshot ? (
-                <Button
-                  variant="primary"
-                  disabled={Boolean(busyKey)}
-                  onClick={() => void this.startReplay({ kind: 'last', snapshot: lastSnapshot })}
-                >
-                  {this.t('replay.lastRun')}
-                </Button>
-              ) : null}
-            </div>
-          </section>
+  useImperativeHandle(ref, () => ({ startReplay, refreshStoredSnapshots, deleteStoredSnapshot }));
 
-          <section className="ui-panel p-3">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div>
-                <h4 className="text-xs font-semibold uppercase text-zinc-700 dark:text-zinc-300">{this.t('replay.storedSnapshots')}</h4>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">{this.t('replay.durableSnapshotsOptIn')}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={loadingStored || Boolean(busyKey)}
-                onClick={() => void this.refreshStoredSnapshots()}
-              >
-                {this.t('replay.refresh')}
-              </Button>
-            </div>
-
-            {listError ? <div className="ui-banner-red mb-2 px-3 py-2 text-xs">{listError}</div> : null}
-
-            {loadingStored ? <div className="text-xs text-zinc-500 dark:text-zinc-500">{this.t('replay.loadingStoredSnapshots')}</div> : null}
-            {!loadingStored && storedSnapshots.length === 0 ? (
-              <div className="border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-2 text-xs text-zinc-500 dark:text-zinc-500">
-                {this.t('replay.noStoredSnapshots')}
-              </div>
-            ) : null}
-            {!loadingStored && storedSnapshots.length > 0 ? (
-              <div className="max-h-72 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800">
-                {storedSnapshots.map((snapshot) => {
-                  const replaySource: ReplaySource = { kind: 'stored', snapshotId: snapshot.id, info: snapshot };
-                  return (
-                    <div key={snapshot.id} className="grid gap-2 p-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                      <div className="min-w-0">
-                        <div className="truncate font-medium text-zinc-900 dark:text-zinc-100">{snapshot.graphId ?? this.t('replay.unknownGraph')}</div>
-                        <div className="truncate text-zinc-500 dark:text-zinc-500">{localTime(snapshot.createdAt, this.locale()) ?? this.t('replay.createdTimeUnknown')}</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          disabled={Boolean(busyKey)}
-                          onClick={() => void this.startReplay(replaySource)}
-                        >
-                          {this.t('replay.replay')}
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          disabled={Boolean(busyKey)}
-                          onClick={() => void this.deleteStoredSnapshot(snapshot.id)}
-                        >
-                          {this.t('replay.delete')}
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </section>
-        </div>
-
-        {notice ? (
-          <div role={notice.kind === 'error' ? 'alert' : undefined} className={`mt-3 border px-3 py-2 text-xs ${noticeClass(notice.kind)}`}>
-            {notice.text}
-            {retryLoginProvider && !this.isInactiveStandby(retryLoginProvider) ? (
-              <Button
-                variant="danger"
-                size="sm"
-                className="ml-3 font-medium"
-                onClick={() => void this.openProviderLogin(retryLoginProvider)}
-              >
-                {this.t('provider.retry')}
-              </Button>
-            ) : retryLoginProvider && this.props.onOpenSettings ? (
-              <Button
-                variant="danger"
-                size="sm"
-                className="ml-3 font-medium"
-                onClick={() => this.openSettings()}
-              >
-                {this.t('settings.title')}
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-        {block ? this.renderBlock(block, question, busyKey) : null}
-      </section>
-    );
-  }
-
-  private renderBlock(block: ReplayBlockState, question: string, busyKey: string | undefined) {
+  const renderBlock = (block: ReplayBlockState, question: string, busyKey: string | undefined) => {
     if (block.reason === 'question-required') {
       return (
         <section className="mt-3 border border-amber-300 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 p-3 text-xs text-amber-800 dark:text-amber-100">
-          <h4 className="font-semibold">{this.t('replay.originalQuestionRequired')}</h4>
+          <h4 className="font-semibold">{translate('replay.originalQuestionRequired')}</h4>
           <p className="mt-1 text-amber-800 dark:text-amber-200">
-            {formatI18n(this.t('replay.originalQuestionDescription'), { source: sourceLabel(block.source, this.locale()) })}
+            {formatI18n(translate('replay.originalQuestionDescription'), { source: sourceLabel(block.source, locale) })}
           </p>
-          <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => this.submitQuestion(event, block)}>
+          <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => submitQuestion(event, block)}>
             <input
               className="min-w-0 flex-1 border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-950 px-2 py-1.5 text-zinc-900 dark:text-zinc-100"
               value={question}
-              onChange={(event) => this.updateQuestion(event)}
-              placeholder={this.t('replay.originalQuestion')}
+              onChange={(event) => updateQuestion(event)}
+              placeholder={translate('replay.originalQuestion')}
             />
             <Button
               type="submit"
               variant="primary"
               disabled={Boolean(busyKey) || question.trim().length === 0}
             >
-              {this.t('replay.replay')}
+              {translate('replay.replay')}
             </Button>
           </form>
         </section>
@@ -359,9 +289,9 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
       const detail = versionMismatchDetail(block.detail);
       return (
         <section className="mt-3 border border-amber-300 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 p-3 text-xs text-amber-800 dark:text-amber-100">
-          <h4 className="font-semibold">{this.t('replay.graphVersionChanged')}</h4>
+          <h4 className="font-semibold">{translate('replay.graphVersionChanged')}</h4>
           <p className="mt-1 text-amber-800 dark:text-amber-200">
-            {formatI18n(this.t('replay.graphVersionMismatch'), {
+            {formatI18n(translate('replay.graphVersionMismatch'), {
               snapshotVersion: detail.snapshotVersion,
               currentVersion: detail.currentVersion,
             })}
@@ -370,9 +300,9 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
             variant="primary"
             className="mt-3"
             disabled={Boolean(busyKey)}
-            onClick={() => void this.startReplay(block.source, { replayWithCurrentGraph: true })}
+            onClick={() => void startReplay(block.source, { replayWithCurrentGraph: true })}
           >
-            {this.t('replay.replayWithCurrentGraph')}
+            {translate('replay.replayWithCurrentGraph')}
           </Button>
         </section>
       );
@@ -381,27 +311,27 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
     if (block.reason === 'preflight') {
       const unavailable = block.preflight?.unavailable ?? [];
       const aliased = block.preflight?.aliased ?? [];
-      const hasLoginUnavailable = unavailable.some((provider) => !this.isInactiveStandby(provider));
+      const hasLoginUnavailable = unavailable.some((provider) => !isInactiveStandby(provider));
       return (
         <section className="mt-3 border border-amber-300 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 p-3 text-xs text-amber-800 dark:text-amber-100">
-          <h4 className="font-semibold">{this.t('replay.cannotStartReplay')}</h4>
-          {hasLoginUnavailable ? <p className="mt-1 text-amber-800 dark:text-amber-200">{this.t('replay.preflightHelp')}</p> : null}
+          <h4 className="font-semibold">{translate('replay.cannotStartReplay')}</h4>
+          {hasLoginUnavailable ? <p className="mt-1 text-amber-800 dark:text-amber-200">{translate('replay.preflightHelp')}</p> : null}
           {unavailable.length > 0 ? (
             <div className="mt-3 grid gap-2">
               {unavailable.map((provider) => {
-                const standby = this.isInactiveStandby(provider);
+                const standby = isInactiveStandby(provider);
                 return (
                   <div key={provider} className="flex items-center justify-between gap-3 border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-950 px-2 py-1.5">
-                    <span>{providerName(provider)} {standby ? this.t('settings.providerStandby') : this.t('replay.unavailable')}</span>
+                    <span>{providerName(provider)} {standby ? translate('settings.providerStandby') : translate('replay.unavailable')}</span>
                     {standby ? (
-                      this.props.onOpenSettings ? (
-                        <Button variant="primary" size="sm" onClick={() => this.openSettings()}>
-                          {this.t('settings.title')}
+                      props.onOpenSettings ? (
+                        <Button variant="primary" size="sm" onClick={() => openSettings()}>
+                          {translate('settings.title')}
                         </Button>
                       ) : null
                     ) : (
-                      <Button variant="primary" size="sm" onClick={() => void this.openProviderLogin(provider)}>
-                        {this.t('replay.openLogin')}
+                      <Button variant="primary" size="sm" onClick={() => void openProviderLogin(provider)}>
+                        {translate('replay.openLogin')}
                       </Button>
                     )}
                   </div>
@@ -409,86 +339,153 @@ export class ReplayPanel extends Component<ReplayPanelProps, ReplayPanelState> {
               })}
             </div>
           ) : null}
-          {aliased.length > 0 ? <div className="mt-2 text-amber-800 dark:text-amber-200">{this.t('replay.aliasedRoles')} {aliased.map(providerName).join(', ')}</div> : null}
+          {aliased.length > 0 ? <div className="mt-2 text-amber-800 dark:text-amber-200">{translate('replay.aliasedRoles')} {aliased.map(providerName).join(', ')}</div> : null}
         </section>
       );
     }
 
     if (block.reason === 'not-found') {
-      return <div className="mt-3 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 px-3 py-2 text-xs text-red-800 dark:text-red-200">{this.t('replay.snapshotNotFound')}</div>;
+      return <div className="mt-3 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 px-3 py-2 text-xs text-red-800 dark:text-red-200">{translate('replay.snapshotNotFound')}</div>;
     }
 
     if (block.reason === 'unknown-graph') {
       const detail = unknownGraphDetail(block.detail);
       return (
         <div className="mt-3 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 px-3 py-2 text-xs text-red-800 dark:text-red-200">
-          {this.t('replay.snapshotGraphUnavailable')}{detail.graphId ? `: ${detail.graphId}` : ''}.
+          {translate('replay.snapshotGraphUnavailable')}{detail.graphId ? `: ${detail.graphId}` : ''}.
         </div>
       );
     }
 
     return (
       <div className="mt-3 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 px-3 py-2 text-xs text-red-800 dark:text-red-200">
-        {this.t('replay.blocked')} {block.reason}.
+        {translate('replay.blocked')} {block.reason}.
       </div>
     );
-  }
+  };
 
-  private locale(): Locale {
-    return this.props.locale ?? 'en';
-  }
+  const lastSnapshot = getLastSnapshot();
+  const { storedSnapshots, loadingStored, listError, busyKey, block, question, notice } = state;
+  const retryLoginProvider = notice?.retryLoginProvider;
 
-  private t(key: I18nKey): string {
-    return t(key, this.locale());
-  }
+  return (
+    <section aria-label={translate('replay.snapshotReplay')} className="mt-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{translate('replay.snapshotReplay')}</h3>
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          {translate('replay.description')}
+        </p>
+      </div>
 
-  private async planReplayForSource(source: ReplaySource, options: ReplayRunOptions): Promise<ReplayPlan | undefined> {
-    try {
-      if (source.kind === 'last') return planReplay(source.snapshot, { replayWithCurrentGraph: options.replayWithCurrentGraph });
-      const json = await host.snapshot.load(source.snapshotId);
-      if (json === null) return undefined;
-      return planReplay(parseStoredSnapshot(json), { replayWithCurrentGraph: options.replayWithCurrentGraph });
-    } catch {
-      return undefined;
-    }
-  }
+      <div className="grid gap-3">
+        <section className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-xs font-semibold uppercase text-zinc-700 dark:text-zinc-300">{translate('replay.lastRun')}</h4>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                {lastSnapshot ? `${lastSnapshot.graphId} - ${localTime(lastSnapshot.createdAt, locale)}` : translate('replay.noInMemorySnapshot')}
+              </p>
+            </div>
+            {lastSnapshot ? (
+              <Button
+                variant="primary"
+                disabled={Boolean(busyKey)}
+                onClick={() => void startReplay({ kind: 'last', snapshot: lastSnapshot })}
+              >
+                {translate('replay.lastRun')}
+              </Button>
+            ) : null}
+          </div>
+        </section>
 
-  private inputForSource(source: ReplaySource, question?: string): Parameters<typeof replaySnapshot>[0] {
-    if (source.kind === 'last') return question ? { snapshot: source.snapshot, question } : { snapshot: source.snapshot };
-    return question ? { snapshotId: source.snapshotId, question } : { snapshotId: source.snapshotId };
-  }
+        <section className="ui-panel p-3">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-xs font-semibold uppercase text-zinc-700 dark:text-zinc-300">{translate('replay.storedSnapshots')}</h4>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{translate('replay.durableSnapshotsOptIn')}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={loadingStored || Boolean(busyKey)}
+              onClick={() => void refreshStoredSnapshots()}
+            >
+              {translate('replay.refresh')}
+            </Button>
+          </div>
 
-  private showBlockedResult(source: ReplaySource, result: Extract<ReplayResult, { ok: false }>): void {
-    this.updateState({
-      block: {
-        reason: result.blocked,
-        source,
-        detail: result.detail,
-        preflight: result.preflight,
-      },
-      question: result.blocked === 'question-required' ? this.state.question : '',
-    });
-  }
+          {listError ? <div className="ui-banner-red mb-2 px-3 py-2 text-xs">{listError}</div> : null}
 
-  private submitQuestion(event: FormEvent<HTMLFormElement>, block: ReplayBlockState): void {
-    event.preventDefault();
-    const question = this.state.question.trim();
-    if (!question) return;
-    void this.startReplay(block.source, { question });
-  }
+          {loadingStored ? <div className="text-xs text-zinc-500 dark:text-zinc-400">{translate('replay.loadingStoredSnapshots')}</div> : null}
+          {!loadingStored && storedSnapshots.length === 0 ? (
+            <div className="border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+              {translate('replay.noStoredSnapshots')}
+            </div>
+          ) : null}
+          {!loadingStored && storedSnapshots.length > 0 ? (
+            <div className="max-h-72 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800">
+              {storedSnapshots.map((snapshot) => {
+                const replaySource: ReplaySource = { kind: 'stored', snapshotId: snapshot.id, info: snapshot };
+                return (
+                  <div key={snapshot.id} className="grid gap-2 p-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-zinc-900 dark:text-zinc-100">{snapshot.graphId ?? translate('replay.unknownGraph')}</div>
+                      <div className="truncate text-zinc-500 dark:text-zinc-400">{localTime(snapshot.createdAt, locale) ?? translate('replay.createdTimeUnknown')}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={Boolean(busyKey)}
+                        onClick={() => void startReplay(replaySource)}
+                      >
+                        {translate('replay.replay')}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={Boolean(busyKey)}
+                        onClick={() => void deleteStoredSnapshot(snapshot.id)}
+                      >
+                        {translate('replay.delete')}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </section>
+      </div>
 
-  private updateQuestion(event: ChangeEvent<HTMLInputElement>): void {
-    this.updateState({ question: event.target.value });
-  }
-
-  private updateState(patch: Partial<ReplayPanelState>): void {
-    if (this.mounted) {
-      this.setState(patch as ReplayPanelState);
-      return;
-    }
-    this.state = { ...this.state, ...patch };
-  }
-}
+      {notice ? (
+        <div role={notice.kind === 'error' ? 'alert' : undefined} className={`mt-3 border px-3 py-2 text-xs ${noticeClass(notice.kind)}`}>
+          {notice.text}
+          {retryLoginProvider && !isInactiveStandby(retryLoginProvider) ? (
+            <Button
+              variant="danger"
+              size="sm"
+              className="ml-3 font-medium"
+              onClick={() => void openProviderLogin(retryLoginProvider)}
+            >
+              {translate('provider.retry')}
+            </Button>
+          ) : retryLoginProvider && props.onOpenSettings ? (
+            <Button
+              variant="danger"
+              size="sm"
+              className="ml-3 font-medium"
+              onClick={() => openSettings()}
+            >
+              {translate('settings.title')}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+      {block ? renderBlock(block, question, busyKey) : null}
+    </section>
+  );
+});
 
 function sourceKey(source: ReplaySource): string {
   return source.kind === 'last' ? `last:${source.snapshot.snapshotId}` : `stored:${source.snapshotId}`;

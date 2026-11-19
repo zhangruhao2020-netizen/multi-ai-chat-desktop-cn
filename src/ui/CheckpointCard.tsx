@@ -1,7 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { AI_PROVIDERS } from '../../shared/constants';
 import type { AIProvider } from '../../shared/types';
 import type { Locale } from '../i18n/resolve';
-import { t } from '../i18n/t';
+import { formatI18n, t } from '../i18n/t';
 import type { PendingCheckpoint } from '../workflow/checkpoint';
 import { resolveCheckpoint } from '../workflow/checkpoint';
 import { Button } from './Button';
@@ -19,6 +20,17 @@ export function CheckpointCard({
   onNativeEdit?: (provider: AIProvider) => void;
   locale?: Locale;
 }) {
+  // L6: the draft textarea auto-grows with its content (160–320px) instead of
+  // scrolling internally at a fixed 160px, and shows a character count.
+  // Hooks stay above the early return so the hook order is stable.
+  const draftRef = useRef<HTMLTextAreaElement | null>(null);
+  useEffect(() => {
+    const textarea = draftRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 160), 320)}px`;
+  }, [draft]);
+
   if (!checkpoint) return null;
 
   const providerName = AI_PROVIDERS[checkpoint.provider].name;
@@ -60,11 +72,15 @@ export function CheckpointCard({
         </div>
       </div>
       <textarea
-        className="mt-3 h-40 w-full resize-y border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 p-2 text-sm leading-relaxed text-zinc-900 dark:text-zinc-100 outline-none focus:border-amber-500"
+        ref={draftRef}
+        className="mt-3 min-h-40 w-full resize-y border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 p-2 text-sm leading-relaxed text-zinc-900 dark:text-zinc-100 outline-none focus:border-amber-500"
         value={draft}
         onChange={(event) => onDraftChange(event.currentTarget.value)}
         aria-label={`${t('checkpoint.draftFor', locale)} ${providerName} ${t('checkpoint.step', locale)} ${checkpoint.nodeId}`}
       />
+      <div className="mt-1 text-right text-xs text-zinc-500 dark:text-zinc-400">
+        {formatI18n(t('checkpoint.characterCount', locale), { count: draft.length })}
+      </div>
     </section>
   );
 }
