@@ -14,7 +14,7 @@ import { formatI18n, t as translateKey } from './i18n/t';
 import { mergePullBridgeState, type PullBridgeState } from './appBridgeState';
 import { onCheckpoint, type PendingCheckpoint } from './workflow/checkpoint';
 import { isSendable, onStepTimeoutEvent, runWorkflow } from './workflow';
-import { readyProvidersFromStates, resolveEffectiveRoles } from './workflow/roleAutoAssignment';
+import { missingProvidersForSerialRun, readyProvidersFromStates, resolveEffectiveRoles } from './workflow/roleAutoAssignment';
 import { createResponseLanguagePolicy } from './workflow/responseLanguage';
 import type { PreflightResult } from './workflow/preflight';
 import { bubbleAuthorLabel } from './bubbleAuthorLabel';
@@ -421,17 +421,41 @@ export default function App() {
   }, [centerSurface, modalHiddenProviders, presentation, states]);
   const hasFreeModeTargets = useMemo(() => hasEffectiveFreeModeTargets(targets, states), [states, targets]);
   const anySendableTargets = useMemo(() => defaultTargets(states, activeProviders), [activeProviders, states]);
+  const savedModeRoles = useMemo(
+    () => defaultRolesForPreset(mode, presetId, appSettings.modeRoles),
+    [mode, presetId, appSettings.modeRoles],
+  );
+  const readyActiveProviders = useMemo(
+    () => readyProvidersFromStates(states, activeProviders),
+    [states, activeProviders],
+  );
+  // The composer hint and send gate use the same effective seats as the
+  // launch path: seats pointing at logged-out providers are filled from
+  // the ready providers, so three ready providers no longer read as
+  // "3 more to connect" with a disabled input.
+  const effectiveModeRoles = useMemo(
+    () =>
+      savedModeRoles
+        ? resolveEffectiveRoles(savedModeRoles, readyActiveProviders, activeProviders)
+        : undefined,
+    [savedModeRoles, readyActiveProviders, activeProviders],
+  );
   const requiredModeProviders = useMemo(() => {
-    const roles = defaultRolesForPreset(mode, presetId, appSettings.modeRoles);
-    return roles
-      ? ([...new Set(Object.values(roles))] as AIProvider[])
+    return effectiveModeRoles
+      ? ([...new Set(Object.values(effectiveModeRoles))] as AIProvider[])
       : presetForId(presetId).requiredProviders;
-  }, [mode, presetId, appSettings.modeRoles]);
+  }, [effectiveModeRoles, presetId]);
   const readyModeProviders = useMemo(
     () => requiredModeProviders.filter((provider) => isSendable(states[provider])),
     [requiredModeProviders, states],
   );
-  const missingModeProviderCount = Math.max(0, requiredModeProviders.length - readyModeProviders.length);
+  const missingModeProviderCount = useMemo(
+    () =>
+      savedModeRoles
+        ? missingProvidersForSerialRun(savedModeRoles, states, activeProviders)
+        : Math.max(0, requiredModeProviders.length - readyModeProviders.length),
+    [savedModeRoles, states, activeProviders, requiredModeProviders, readyModeProviders],
+  );
   const noSendableProviders = !settingsLoaded || (presetId === 'brainstorm'
     ? readyModeProviders.length === 0
     : mode === 'free'
@@ -1507,7 +1531,20 @@ export default function App() {
       workflowExecutionGenerationRef.current = workflowExecutionGeneration;
       if (mode === 'free') {
         const brainstormRoles = brainstorm ? defaultRolesForPreset(mode, presetId, settingsRef.current.modeRoles) : undefined;
-        autoFocusRunCandidate(brainstormRoles ? Object.values(brainstormRoles)[0] : workflowTargets?.[0]);
+        // Focus the provider that will actually speak first: the effective
+        // seats, not the saved ones, so a logged-out first seat does not
+        // steal the focus pane.
+        const brainstormActive = activeProvidersForStandby(settingsRef.current.standbyProvider);
+        const brainstormFocus = brainstormRoles
+          ? Object.values(
+              resolveEffectiveRoles(
+                brainstormRoles,
+                readyProvidersFromStates(statesRef.current, brainstormActive),
+                brainstormActive,
+              ),
+            )[0]
+          : workflowTargets?.[0];
+        autoFocusRunCandidate(brainstormFocus);
       }
       const replayContext =
         replayContextSessionRef.current === activeSessionId ? buildConversationReplayContext(messages) : undefined;

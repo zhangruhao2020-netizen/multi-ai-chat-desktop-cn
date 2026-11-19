@@ -55,3 +55,32 @@ export function resolveEffectiveRoles(
   });
   return filled;
 }
+
+/**
+ * How many more providers must connect before a serial run can start.
+ * This is the gate the composer hint and send block share with the launch
+ * path, so the input never disagrees with it: when the saved seats point
+ * at logged-out providers but at least two other providers are ready,
+ * the seats are filled from the ready providers and nothing is missing;
+ * when fewer than two are ready, the missing count is how many more it
+ * takes to reach two — not how many saved seats are empty. The one
+ * exception is a seat on a standby provider: that seat keeps blocking
+ * the run until its provider is ready, so the seats-based count is the
+ * honest one there.
+ */
+export function missingProvidersForSerialRun(
+  configured: ModeRoles | Record<string, AIProvider>,
+  states: Readonly<Record<AIProvider, ProviderState>> | Map<AIProvider, ProviderState>,
+  active: readonly AIProvider[],
+): number {
+  const ready = readyProvidersFromStates(states, active);
+  const effective = resolveEffectiveRoles(configured, ready, active);
+  const seats = [...new Set(Object.values(effective))];
+  const readySeats = seats.filter((provider) => {
+    const state = states instanceof Map ? states.get(provider) : states[provider];
+    return state !== undefined && isSendable(state);
+  });
+  const hasInactiveSeat = Object.values(configured).some((provider) => !active.includes(provider));
+  if (hasInactiveSeat) return seats.length - readySeats.length;
+  return Math.max(0, MIN_DISTINCT_READY_PROVIDERS - ready.length);
+}

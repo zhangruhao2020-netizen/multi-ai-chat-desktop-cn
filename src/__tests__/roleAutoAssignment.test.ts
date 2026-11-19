@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_AI_PROVIDERS, DEFAULT_FREE_TARGET_PROVIDERS } from '../../shared/constants';
 import type { AIProvider, ProviderState } from '../../shared/types';
-import { readyProvidersFromStates, resolveEffectiveRoles } from '../workflow/roleAutoAssignment';
+import { missingProvidersForSerialRun, readyProvidersFromStates, resolveEffectiveRoles } from '../workflow/roleAutoAssignment';
 
 function state(provider: AIProvider, sendable = true): ProviderState {
   return {
@@ -86,5 +86,42 @@ describe('resolveEffectiveRoles', () => {
     const filled = resolveEffectiveRoles(consult, ['gemini', 'deepseek'], active);
     expect(filled.first).not.toBe(filled.second);
     expect(new Set(Object.values(filled)).size).toBe(2);
+  });
+});
+
+describe('missingProvidersForSerialRun', () => {
+  it('reports zero for the reported case: three ready providers, stale saved seats', () => {
+    // The composer used to read "3 more to connect" here because it
+    // counted the empty saved seats; the run itself already starts.
+    expect(missingProvidersForSerialRun(staleDebateRoles, statesFor(['deepseek', 'doubao', 'gemini']), active)).toBe(0);
+  });
+
+  it('reports zero when two providers are ready', () => {
+    expect(missingProvidersForSerialRun(staleDebateRoles, statesFor(['deepseek', 'gemini']), active)).toBe(0);
+  });
+
+  it('reports one more when a single seated provider is ready', () => {
+    expect(missingProvidersForSerialRun(staleDebateRoles, statesFor(['gemini']), active)).toBe(1);
+  });
+
+  it('reports one more when a single unseated provider is ready', () => {
+    expect(missingProvidersForSerialRun(staleDebateRoles, statesFor(['deepseek']), active)).toBe(1);
+  });
+
+  it('reports two more when no provider is ready', () => {
+    expect(missingProvidersForSerialRun(staleDebateRoles, statesFor([]), active)).toBe(2);
+  });
+
+  it('reports zero when every saved seat is ready', () => {
+    const twoModel: Record<string, AIProvider> = { pro: 'gemini', con: 'deepseek', judge: 'gemini', summary: 'deepseek' };
+    expect(missingProvidersForSerialRun(twoModel, statesFor(['gemini', 'deepseek']), active)).toBe(0);
+  });
+
+  it('falls back to the seats-based count when a seat points at a standby provider', () => {
+    // Grok is standby here, so the run stays blocked on its seat even
+    // though three other providers are ready; the count must say so.
+    const withoutGrok = active.filter((provider) => provider !== 'grok');
+    const states = statesFor(['chatgpt', 'claude', 'gemini']);
+    expect(missingProvidersForSerialRun(staleDebateRoles, states, withoutGrok)).toBe(1);
   });
 });
