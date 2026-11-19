@@ -6,8 +6,9 @@ import type { Locale } from '../i18n/resolve';
 import { formatI18n, t } from '../i18n/t';
 import { abortWorkflow, getInFlightProviders } from './cancel';
 import { emitSystemError, sendWorkflowStatus } from './events';
-import { executeGraph, preflightGraph, workflowGraphs } from './graph';
+import { executeGraph, preflightGraph, resolveGraphRoles, workflowGraphs, type WorkflowGraph } from './graph';
 import type { PreflightResult } from './preflight';
+import { readyProvidersFromStates, resolveEffectiveRoles } from './roleAutoAssignment';
 import { prepareWorkflowRun } from './runtime';
 import type { ResponseLanguagePolicy } from './responseLanguage';
 import { isProviderPageReloadedError } from './providerResponse';
@@ -80,10 +81,11 @@ async function runPreparedWorkflow({
     };
     if (presetId === 'brainstorm') {
       const graph = workflowGraphs.brainstorm;
-      const preflight = await preflightGraph(graph, roles, activeProviders);
+      const effectiveRoles = await resolveRunRoles(graph, roles, activeProviders);
+      const preflight = await preflightGraph(graph, effectiveRoles, activeProviders);
       if (!preflight.ok) return { ok: false, preflight };
 
-      await executeGraph(graph, { text, context, roles, checkpoints, locale, responseLanguagePolicy, providerModels }, graphOptions);
+      await executeGraph(graph, { text, context, roles: effectiveRoles, checkpoints, locale, responseLanguagePolicy, providerModels }, graphOptions);
       return { ok: true };
     }
 
@@ -105,10 +107,11 @@ async function runPreparedWorkflow({
 
     const serialMode = mode as Exclude<ChatMode, 'free'>;
     const graph = workflowGraphs[serialMode];
-    const preflight = await preflightGraph(graph, roles, activeProviders);
+    const effectiveRoles = await resolveRunRoles(graph, roles, activeProviders);
+    const preflight = await preflightGraph(graph, effectiveRoles, activeProviders);
     if (!preflight.ok) return { ok: false, preflight };
 
-    await executeGraph(graph, { text, context, roles, checkpoints, locale, responseLanguagePolicy, providerModels }, graphOptions);
+    await executeGraph(graph, { text, context, roles: effectiveRoles, checkpoints, locale, responseLanguagePolicy, providerModels }, graphOptions);
 
     return { ok: true };
   } catch (error) {
@@ -117,6 +120,27 @@ async function runPreparedWorkflow({
     sendWorkflowStatus('');
     return { ok: true };
   }
+}
+
+/**
+ * Seats a serial run actually runs with. When the saved seats point at
+ * providers that are logged out but at least two other providers are
+ * ready, the seats are filled from the ready providers (see
+ * resolveEffectiveRoles) so the run starts instead of blocking on the
+ * saved lineup. The same seats go to the preflight and the execution.
+ */
+async function resolveRunRoles(
+  graph: WorkflowGraph,
+  roles: ModeRoles | undefined,
+  activeProviders: readonly AIProvider[] | undefined,
+): Promise<Record<string, AIProvider>> {
+  const configured =
+    roles ?? (Object.fromEntries(resolveGraphRoles(graph, undefined)) as Record<string, AIProvider>);
+  const snapshot = await host.connections.get();
+  const byProvider = new Map(snapshot.map((state) => [state.provider, state]));
+  const active = activeProviders ?? DEFAULT_FREE_TARGET_PROVIDERS;
+  const ready = readyProvidersFromStates(byProvider, active);
+  return resolveEffectiveRoles(configured, ready, active);
 }
 
 function workflowFailureText(error: unknown, locale: Locale | undefined): string {

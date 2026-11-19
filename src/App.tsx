@@ -14,6 +14,7 @@ import { formatI18n, t as translateKey } from './i18n/t';
 import { mergePullBridgeState, type PullBridgeState } from './appBridgeState';
 import { onCheckpoint, type PendingCheckpoint } from './workflow/checkpoint';
 import { isSendable, onStepTimeoutEvent, runWorkflow } from './workflow';
+import { readyProvidersFromStates, resolveEffectiveRoles } from './workflow/roleAutoAssignment';
 import { createResponseLanguagePolicy } from './workflow/responseLanguage';
 import type { PreflightResult } from './workflow/preflight';
 import { bubbleAuthorLabel } from './bubbleAuthorLabel';
@@ -1565,8 +1566,19 @@ export default function App() {
       : serialMode
         ? defaultRolesForPreset(serialMode, undefined, modeRoles)
         : undefined;
-    const participants = workflowRoles
-      ? [...new Set(Object.values(workflowRoles))]
+    // Seats that point at logged-out providers are filled from the ready
+    // providers before anything else reads the lineup, so the session
+    // freshening and the start gate both see the seats that will run.
+    const workflowActiveProviders = activeProvidersForStandby(settingsRef.current.standbyProvider);
+    const effectiveRoles = workflowRoles
+      ? resolveEffectiveRoles(
+          workflowRoles,
+          readyProvidersFromStates(statesRef.current, workflowActiveProviders),
+          workflowActiveProviders,
+        )
+      : undefined;
+    const participants = effectiveRoles
+      ? [...new Set(Object.values(effectiveRoles))]
       : freeModeTargets(targets, statesRef.current);
 
     const providersToFreshen = pendingProviderSessionResets(
@@ -1621,8 +1633,8 @@ export default function App() {
       try {
         const result = await preflightGraph(
           serialGraph,
-          workflowRoles,
-          activeProvidersForStandby(settingsRef.current.standbyProvider),
+          effectiveRoles,
+          workflowActiveProviders,
         );
         if (!result.ok) {
           recordEventLog(eventFromWorkflowPreflightBlocked(mode, result.unavailable.length + result.aliased.length));

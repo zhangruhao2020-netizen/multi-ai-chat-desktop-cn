@@ -39,7 +39,7 @@ describe('presetReadiness', () => {
       debate: { pro: 'gemini', con: 'deepseek', judge: 'gemini', summary: 'deepseek' },
     };
     expect(presetReadiness(debate, statesFor(['gemini', 'deepseek']), 'en', twoModelRoles)).toEqual({
-      label: '2/2 ready',
+      label: '2/4 ready',
       ready: true,
     });
   });
@@ -50,8 +50,26 @@ describe('presetReadiness', () => {
       debate: { pro: 'gemini', con: 'gemini', judge: 'gemini', summary: 'gemini' },
     };
     expect(presetReadiness(debate, statesFor(['gemini']), 'en', oneModelRoles)).toEqual({
-      label: '1/1 ready',
+      label: '1/4 ready',
       ready: false,
+    });
+  });
+
+  it('reads 3/4 when three ready providers can take the debate seats even if the saved seats point elsewhere', () => {
+    // The reported bug: DeepSeek/Doubao/Gemini ready, but the saved seats
+    // (ChatGPT/Claude/Grok/Gemini) only overlap on Gemini, so the card
+    // used to read 1/4. Seats are filled from the ready providers now.
+    expect(presetReadiness(debate, statesFor(['deepseek', 'doubao', 'gemini']), 'en')).toEqual({
+      label: '3/4 ready',
+      ready: true,
+    });
+  });
+
+  it('reads 2/4 for consult once two providers are ready', () => {
+    const consult = PRESET_CATALOG.find((preset) => preset.id === 'consult')!;
+    expect(presetReadiness(consult, statesFor(['deepseek', 'gemini']), 'en')).toEqual({
+      label: '2/4 ready',
+      ready: true,
     });
   });
 

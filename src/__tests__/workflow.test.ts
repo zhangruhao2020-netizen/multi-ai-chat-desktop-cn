@@ -278,6 +278,32 @@ describe('workflow engine', () => {
     ).resolves.toMatchObject({ ok: true, unavailable: [], aliased: [] });
   });
 
+  it('starts a debate from ready providers when the saved seats point at logged-out providers', async () => {
+    // The reported bug: DeepSeek/Doubao/Gemini ready, but the saved seats
+    // (ChatGPT/Claude/Grok/Gemini) only overlap on Gemini. The run fills
+    // the seats from the ready providers instead of blocking on the lineup.
+    vi.mocked(host.connections.get).mockResolvedValue([state('deepseek'), state('doubao'), state('gemini')]);
+    vi.mocked(host.provider.send).mockImplementation(async (provider) => {
+      publishBridgeMessage(done(provider, `${provider}-answer`));
+    });
+
+    await expect(
+      runWorkflow({
+        text: 'three ready providers debate',
+        mode: 'debate',
+        roles: { pro: 'chatgpt', con: 'claude', judge: 'grok', summary: 'gemini' },
+        activeProviders: providers,
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(vi.mocked(host.provider.send).mock.calls.map(([provider]) => provider)).toEqual([
+      'deepseek',
+      'doubao',
+      'gemini',
+      'deepseek',
+    ]);
+  });
+
   it.each([
     { mode: 'debate' },
     { mode: 'consult' },
@@ -559,8 +585,34 @@ describe('workflow engine', () => {
     });
   });
 
-  it('blocks Brainstorm before turn one when a required provider is unavailable', async () => {
+  it('starts Brainstorm from ready providers when a required seat is unavailable', async () => {
+    // Two ready providers are enough to start: the seat held by the
+    // logged-out provider is filled from the ready providers instead of
+    // blocking the run on the saved lineup.
     vi.mocked(host.connections.get).mockResolvedValue([state('chatgpt'), state('claude', false), state('deepseek'), state('doubao'), state('gemini'), state('grok')]);
+    vi.mocked(host.provider.send).mockImplementation(async (provider) => {
+      publishBridgeMessage(done(provider, `${provider}-answer`));
+    });
+
+    await expect(
+      runWorkflow({
+        text: 'Generate launch ideas',
+        mode: 'free',
+        presetId: 'brainstorm',
+      }),
+    ).resolves.toEqual({ ok: true });
+    expect(vi.mocked(host.provider.send).mock.calls.map(([provider]) => provider)).not.toContain('claude');
+  });
+
+  it('still blocks Brainstorm when fewer than two providers are ready', async () => {
+    vi.mocked(host.connections.get).mockResolvedValue([
+      state('chatgpt'),
+      state('claude', false),
+      state('deepseek', false),
+      state('doubao', false),
+      state('gemini', false),
+      state('grok', false),
+    ]);
 
     await expect(
       runWorkflow({
@@ -570,7 +622,7 @@ describe('workflow engine', () => {
       }),
     ).resolves.toEqual({
       ok: false,
-      preflight: { ok: false, unavailable: ['claude'], aliased: [] },
+      preflight: { ok: false, unavailable: ['claude', 'deepseek', 'doubao', 'gemini'], aliased: [] },
     });
     expect(host.provider.send).not.toHaveBeenCalled();
   });
