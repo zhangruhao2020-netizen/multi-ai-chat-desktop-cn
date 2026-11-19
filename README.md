@@ -16,7 +16,7 @@ Get the current stable release from the [**v1.9.8 download page**](https://githu
 
 | Platform | Download | First-launch note |
 |---|---|---|
-| **Windows 10/11 x64** | `x64-setup.exe` or portable `.zip` | Artifacts are unsigned, so SmartScreen may warn. WebView2 is normally present; the installer can fetch it when missing. |
+| **Windows 10/11 x64** | `x64-setup.exe` or portable `.zip` | Windows builds are Authenticode-signed via SignPath Foundation once signing is configured — see [code signing](./CODE_SIGNING.md). Unsigned builds may trigger SmartScreen. WebView2 is normally present; the installer can fetch it when missing. |
 | **macOS Apple Silicon** | `aarch64.dmg` | Ad-hoc signed, not Apple-notarized. No Intel build is published. Follow the steps below on first launch. |
 | **Linux x86_64** | `.AppImage` | Run `chmod +x Multi-AI*.AppImage`. Ubuntu 22.04 / Debian 12 or newer is recommended. |
 
@@ -126,7 +126,7 @@ Report vulnerabilities privately through [SECURITY.md](./SECURITY.md); never put
 
 - Provider sites can change without notice. A DOM or login-flow change may temporarily break automatic input, send, or completion detection until an adapter update ships.
 - Provider accounts, subscriptions, quotas, regional availability, terms, and security challenges still apply. The app neither automates nor bypasses them. Claude requires an authenticated account; Gemini may require system-browser guidance for a Google `/sorry` block; Grok challenges must be solved manually in its pane.
-- **Windows x64** has verified packaged launch evidence, but artifacts are unsigned and can trigger SmartScreen.
+- **Windows x64** has verified packaged launch evidence. Artifacts are Authenticode-signed via SignPath Foundation once signing is configured ([code signing](./CODE_SIGNING.md)); unsigned builds can trigger SmartScreen.
 - **macOS Apple Silicon** is partially verified. The DMG is ad-hoc signed and not notarized; an earlier real-device report opened the app and logged into ChatGPT, Claude, and Gemini, while Grok remained on Cloudflare. Current Grok recovery still needs a live Apple Silicon retest. There is no Intel artifact.
 - **Linux x86_64** packaging is CI-verified only; there is no current maintainer real-device launch report.
 - The v1.9.6 changes have automated coverage only and have not been retested live. No Chat/Work account was available, and no signed-in Grok page was captured live, so the next live check is a Chat/Work account sending one prompt automatically and a signed-in Grok pane staying Ready. Installed apps pick up the Grok and ChatGPT adapter updates through the adapter update (at startup and every six hours) since 2026-09-30, but the ChatGPT Chat/Work engine changes need v1.9.6. A provider engine that goes silent or wedges while its page is never replaced still waits out the 10-minute inactivity window and the 60-minute absolute cap. Meta, DeepSeek, and Doubao stay on `inputStrategy: "default"`. Meta stop, new-session reset, and profile persistence remain unverified, and Grok Heavy was not exercised. Prior Windows packaged-launch evidence, the earlier Apple Silicon ChatGPT/Claude/Gemini login report (Grok remained on Cloudflare), and Linux CI-only packaging remain the current record. There is no new Windows, macOS, or Linux launch check for v1.9.6.

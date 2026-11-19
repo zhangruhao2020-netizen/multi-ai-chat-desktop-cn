@@ -11,6 +11,9 @@ on:
 
 permissions:
   contents: read
+  # The SignPath action reads the uploaded unsigned artifact back through
+  # the GitHub API, which needs actions: read on top of contents: read.
+  actions: read
 
 env:
   RELEASE_TAG: ${{ github.ref_name }}
@@ -95,6 +98,68 @@ jobs:
       - name: Build Tauri bundle
         run: pnpm tauri build
 
+      # Windows code signing via SignPath Foundation (free for open source).
+      # See CODE_SIGNING.md. The app exe is signed before the portable zip
+      # is packed, so the zip contains the signed exe. The NSIS installer is
+      # signed separately below, after the zip is built: it still embeds the
+      # unsigned exe (the installer is built from the binary before signing),
+      # but the file users download and run — the installer itself — is signed.
+      # Gating: every signing step is skipped when SIGNPATH_API_TOKEN is not
+      # configured, and the release ships unsigned, exactly as before.
+      # Each signing request needs one manual approval in SignPath (the
+      # release-signing policy approver gets an email). If approval does not
+      # arrive within the wait timeout, or signing fails for any other reason,
+      # the step is allowed to fail and the release continues with unsigned
+      # files instead of blocking.
+      - name: Upload unsigned app exe for signing
+        id: upload-unsigned-exe
+        if: ${{ matrix.platform == 'windows' && secrets.SIGNPATH_API_TOKEN != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          # archive: false uploads the single exe as-is (not zipped); the
+          # artifact name then defaults to the file name. SignPath needs the
+          # raw exe so its artifact configuration can be a plain exe config.
+          path: src-tauri/target/release/*.exe
+          if-no-files-found: error
+          archive: false
+          retention-days: 1
+
+      - name: Sign app exe with SignPath
+        id: sign-exe
+        if: ${{ matrix.platform == 'windows' && secrets.SIGNPATH_API_TOKEN != '' }}
+        continue-on-error: true
+        uses: signpath/github-action-submit-signing-request@4a84eb4ad763290f059275786f2deed97c2c672b # v3.1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload-unsigned-exe.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: dist/signed-exe
+          skip-decompress: true
+
+      - name: Replace app exe with signed copy
+        if: ${{ matrix.platform == 'windows' && steps.sign-exe.outcome == 'success' }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $signed = Get-ChildItem -Path dist/signed-exe -Filter *.exe -File | Select-Object -First 1
+          if (-not $signed) { throw 'No signed exe downloaded from SignPath' }
+          # Verify before overwriting: a bad signature must never replace the
+          # working unsigned build, and no backup file may be left inside
+          # src-tauri/target/release (pack:portable zips that directory).
+          $status = (Get-AuthenticodeSignature -FilePath $signed.FullName).Status
+          if ($status -ne 'Valid') {
+            Write-Warning "Signed app exe failed verification ($status); keeping the unsigned build."
+            exit 0
+          }
+          $target = Get-ChildItem -Path src-tauri/target/release -Filter *.exe -File | Select-Object -First 1
+          if (-not $target) { throw 'No app exe found in src-tauri/target/release' }
+          Copy-Item $signed.FullName $target.FullName -Force
+          Write-Host "Signed app exe verified and installed: $($target.FullName)"
+
       # Apple Silicon requires a valid code signature for browser-downloaded apps.
       # tauri.conf.json uses Tauri's documented ad-hoc identity (`-`) until a
       # Developer ID certificate and notarization credentials are available.
@@ -131,12 +196,62 @@ jobs:
             exit 1
           fi
 
-      # Frozen distribution policy: Windows artifacts remain unsigned and
-      # macOS uses ad-hoc signing. GitHub Releases is the manual update channel.
+      # Distribution policy: Windows artifacts are Authenticode-signed via
+      # SignPath Foundation when SIGNPATH_API_TOKEN is configured (see
+      # CODE_SIGNING.md); without it they ship unsigned, as before. macOS
+      # uses ad-hoc signing. GitHub Releases is the manual update channel.
 
       - name: Build Windows portable zip
         if: matrix.platform == 'windows'
         run: pnpm pack:portable -- --input src-tauri/target/release --out dist/portable --name "Multi-AI-Chat-Desktop-${{ steps.version.outputs.version }}-windows-portable.zip"
+
+      # Sign the NSIS installer itself (the file users download and run).
+      # Same gating and failure behavior as the app exe above: skipped
+      # without SIGNPATH_API_TOKEN, and a failed/timed-out signing request
+      # leaves the unsigned installer in place instead of blocking the release.
+      - name: Upload unsigned NSIS installer for signing
+        id: upload-unsigned-nsis
+        if: ${{ matrix.platform == 'windows' && secrets.SIGNPATH_API_TOKEN != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          archive: false
+          retention-days: 1
+
+      - name: Sign NSIS installer with SignPath
+        id: sign-nsis
+        if: ${{ matrix.platform == 'windows' && secrets.SIGNPATH_API_TOKEN != '' }}
+        continue-on-error: true
+        uses: signpath/github-action-submit-signing-request@4a84eb4ad763290f059275786f2deed97c2c672b # v3.1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload-unsigned-nsis.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 1800
+          output-artifact-directory: dist/signed-nsis
+          skip-decompress: true
+
+      - name: Replace NSIS installer with signed copy
+        if: ${{ matrix.platform == 'windows' && steps.sign-nsis.outcome == 'success' }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $signed = Get-ChildItem -Path dist/signed-nsis -Filter *.exe -File | Select-Object -First 1
+          if (-not $signed) { throw 'No signed installer downloaded from SignPath' }
+          # Verify before overwriting, same as the app exe above.
+          $status = (Get-AuthenticodeSignature -FilePath $signed.FullName).Status
+          if ($status -ne 'Valid') {
+            Write-Warning "Signed NSIS installer failed verification ($status); keeping the unsigned build."
+            exit 0
+          }
+          $target = Get-ChildItem -Path src-tauri/target/release/bundle/nsis -Filter *.exe -File | Select-Object -First 1
+          if (-not $target) { throw 'No NSIS installer found in src-tauri/target/release/bundle/nsis' }
+          Copy-Item $signed.FullName $target.FullName -Force
+          Write-Host "Signed NSIS installer verified and installed: $($target.FullName)"
 
       - name: Upload Windows artifacts
         if: matrix.platform == 'windows'
