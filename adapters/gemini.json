@@ -1,7 +1,7 @@
 {
   "$schema": "./schema.json",
-  "schemaVersion": 1,
-  "adapterVersion": 3,
+  "schemaVersion": 2,
+  "adapterVersion": 4,
   "provider": "gemini",
   "displayName": "Gemini",
   "urls": {
@@ -14,7 +14,16 @@
   "sendButtonSelectors": ["button.send-button", "button[aria-label=\"Send message\"]", "button[aria-label=\"Send\"]", "button[aria-label=\"傳送訊息\"]", "button[aria-label=\"送出\"]", "button[data-mat-icon-name=\"send\"]", ".send-button-container button", "button mat-icon[data-mat-icon-name=\"send\"]", ".action-wrapper button[aria-label]", ".input-area-container button.send", "button.send-message-button"],
   "responseSelectors": [".model-response-text .markdown", ".model-response-text", "model-response .markdown", "model-response message-content", ".response-content .markdown", ".message-content[data-message-id]"],
   "loginDetectors": [".ql-editor[contenteditable=\"true\"]", "rich-textarea [contenteditable=\"true\"]", "div[contenteditable=\"true\"][aria-label=\"Enter a prompt here\"]"],
-  "loggedOutDetectors": [],
+  "loggedOutDetectors": [
+    {
+      "selector": "button",
+      "textIncludes": "Sign in"
+    },
+    {
+      "selector": "button",
+      "textIncludes": "登录"
+    }
+  ],
   "thinkingDetectors": [".loading-indicator", ".thinking-indicator", "mat-progress-bar", "button[aria-label=\"Stop response\"]", "button[aria-label=\"Stop\"]", "button[aria-label=\"停止回應\"]", ".response-streaming", "[data-test-id=\"response-loading\"]"],
   "stopButtonSelectors": ["button[aria-label=\"Stop response\"]", "button[aria-label=\"Stop\"]", "button[aria-label=\"停止回應\"]"],
   "inputStrategy": "quill-angular",

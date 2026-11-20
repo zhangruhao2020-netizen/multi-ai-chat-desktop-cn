@@ -1011,6 +1011,66 @@ describe('injected engine input hardening', () => {
     expect(errorDone(env)).toBeUndefined();
   });
 
+  it('completes a Doubao reply from its receive_message container', async () => {
+    vi.useFakeTimers();
+    const env = createEnv({ inputKind: 'contenteditable' });
+    const editor = env.input;
+    editor.setAttribute('contenteditable', 'true');
+    const placeholder = new FakeElement(env.document, 'p', '发消息...');
+    editor.appendChild(placeholder);
+    env.document.body.appendChild(editor);
+    env.detectorElements.set('[contenteditable="true"]', [editor]);
+    env.detectorElements.set(
+      'button[aria-label="发送"]',
+      env.sendButton ? [env.sendButton] : [],
+    );
+    env.document.execCommandResult = true;
+    env.document.execCommandMutates = true;
+    const prompt = '请介绍豆腐的历史。';
+    if (env.sendButton) {
+      env.sendButton.onClick = () => {
+        editor.setVisibleText('');
+      };
+    }
+    const handler = await installEngine(env);
+    dispatchAdapter(
+      handler,
+      bundledDoubaoAdapter({
+        timing: { doneDelayMs: 100, chunkDebounceMs: 0, statusIntervalMs: 1_000_000, backupPollMs: 10 },
+      }),
+    );
+
+    send(handler, prompt, 'doubao');
+    await vi.advanceTimersByTimeAsync(PRE_SEND_DELAY_MS + SEND_RETRY_DELAY_MS + 1);
+    expect(env.sendButton?.clickCount).toBe(1);
+    expect(errorDone(env)).toBeUndefined();
+
+    // The answer streams into the receive_message container while the
+    // "停止生成" stop button is visible: no RESPONSE_DONE yet.
+    const answer = new FakeElement(env.document, 'div', '豆腐起源于西汉，');
+    answer.setAttribute('data-testid', 'receive_message');
+    env.document.body.appendChild(answer);
+    const stopButton = new FakeElement(env.document, 'button', '停止生成');
+    env.document.body.appendChild(stopButton);
+    FakeMutationObserver.notify();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(env.emitted.filter((message) => message.action === 'RESPONSE_DONE')).toHaveLength(0);
+
+    // Generation ends: the stop button unmounts and the answer finishes.
+    stopButton.isConnected = false;
+    answer.setVisibleText('豆腐起源于西汉，由淮南王刘安发明。');
+    FakeMutationObserver.notify();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(env.emitted).toContainEqual({
+      v: 1,
+      action: 'RESPONSE_DONE',
+      provider: 'doubao',
+      payload: '豆腐起源于西汉，由淮南王刘安发明。',
+    });
+    expect(errorDone(env)).toBeUndefined();
+  });
+
   // Gemini model picker: drives the page's own model switcher before the
   // draft is staged, and never blocks the send when the picker is absent
   // or redesigned.
@@ -1057,7 +1117,7 @@ describe('injected engine input hardening', () => {
   }
 
   it('bundled Gemini adapter declares the documented model picker', () => {
-    expect(geminiAdapterSeed.adapterVersion).toBe(3);
+    expect(geminiAdapterSeed.adapterVersion).toBe(4);
     expect(geminiAdapterSeed.modelPicker).toEqual({
       openSelectors: ['button.input-area-switch'],
       currentLabelSelectors: ['.input-area-switch-label span'],
@@ -1311,6 +1371,50 @@ describe('injected engine input hardening', () => {
       action: 'STATUS_REPORT',
       provider: 'gemini',
       payload: { dom: 'ready', login: 'blocked', thinking: false, bootId: 'boot1' },
+    });
+  });
+
+  it('reports Gemini logged out on its app host without a composer', async () => {
+    const env = createEnv({ inputKind: 'textarea' });
+    const handler = await installEngine(env);
+    vi.stubGlobal('location', {
+      href: 'https://gemini.google.com/app',
+      hostname: 'gemini.google.com',
+      pathname: '/app',
+    });
+
+    dispatchAdapter(handler, { provider: 'gemini', loginDetectors: [], loggedOutDetectors: [] });
+
+    expect(env.emitted).toContainEqual({
+      v: 1,
+      action: 'STATUS_REPORT',
+      provider: 'gemini',
+      payload: { dom: 'ready', login: 'logged_out', thinking: false, bootId: 'boot1' },
+    });
+  });
+
+  it('reports Gemini logged out when its Sign in button is visible', async () => {
+    const env = createEnv({ inputKind: 'textarea' });
+    const signIn = new FakeElement(env.document, 'button', 'Sign in');
+    env.document.body.appendChild(signIn);
+    const handler = await installEngine(env);
+    vi.stubGlobal('location', {
+      href: 'https://gemini.google.com/app',
+      hostname: 'gemini.google.com',
+      pathname: '/app',
+    });
+
+    dispatchAdapter(handler, {
+      provider: 'gemini',
+      loginDetectors: [...geminiAdapterSeed.loginDetectors],
+      loggedOutDetectors: [...geminiAdapterSeed.loggedOutDetectors],
+    });
+
+    expect(env.emitted).toContainEqual({
+      v: 1,
+      action: 'STATUS_REPORT',
+      provider: 'gemini',
+      payload: { dom: 'ready', login: 'logged_out', thinking: false, bootId: 'boot1' },
     });
   });
 

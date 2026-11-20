@@ -53,7 +53,8 @@ describe('M0 shared constants and adapter seeds', () => {
     expect(claude.timing.doneDelayMs).toBe(5000);
     expect(claude.timing.chunkDebounceMs).toBe(500);
 
-    expect(gemini.schemaVersion).toBe(1);
+    expect(gemini.schemaVersion).toBe(2);
+    expect(gemini.adapterVersion).toBe(4);
     expect(gemini.inputStrategy).toBe('quill-angular');
     expect(gemini.timing.doneDelayMs).toBe(4000);
     expect(gemini.timing.chunkDebounceMs).toBe(600);

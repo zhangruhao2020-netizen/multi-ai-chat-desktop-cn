@@ -591,7 +591,13 @@ class InactiveSendOperationError extends Error {
     ) {
       login = 'logged_in';
     } else if (adapter.provider === 'gemini' && location.hostname === 'gemini.google.com') {
-      login = 'blocked';
+      // No composer and no challenge on the app host: this is a signed-out (or still
+      // loading) page, not a security challenge. A real challenge is already caught
+      // above by isProviderChallengeActive (/sorry + Cloudflare). Reporting 'blocked'
+      // here used to show the "open in browser" banner for every signed-out Gemini
+      // page, sending the user straight to the system browser instead of offering
+      // the in-webview login.
+      login = 'logged_out';
     }
     bridge.emit({
       v: 1,

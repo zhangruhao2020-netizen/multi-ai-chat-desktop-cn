@@ -1,7 +1,7 @@
 {
   "$schema": "./schema.json",
   "schemaVersion": 2,
-  "adapterVersion": 2,
+  "adapterVersion": 3,
   "provider": "doubao",
   "displayName": "Doubao",
   "urls": {
@@ -23,8 +23,11 @@
     "button[type=\"submit\"]"
   ],
   "responseSelectors": [
-    "[data-testid=\"assistant-message\"]",
-    ".message-bubble.assistant",
+    "div[data-testid=\"receive_message\"]",
+    "[data-testid=\"message_content\"]",
+    "[data-testid=\"message_text_content\"]",
+    "[data-role=\"assistant\"]",
+    "[class*=\"bot-message\"]",
     "[class*=\"markdown\"]"
   ],
   "loginDetectors": [
@@ -50,13 +53,15 @@
   ],
   "thinkingDetectors": [
     "button[aria-label=\"停止\"]",
-    "[aria-label*=\"stop\" i]",
-    "[data-testid*=\"stop\" i]"
+    "button[aria-label=\"停止生成\"]",
+    {
+      "selector": "button",
+      "textIncludes": "停止生成"
+    }
   ],
   "stopButtonSelectors": [
     "button[aria-label=\"停止\"]",
-    "[aria-label*=\"stop\" i]",
-    "[data-testid*=\"stop\" i]"
+    "button[aria-label=\"停止生成\"]"
   ],
   "inputStrategy": "default",
   "sendStrategy": "click",

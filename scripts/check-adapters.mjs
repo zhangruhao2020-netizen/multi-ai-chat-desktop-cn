@@ -51,8 +51,8 @@ const expected = {
     stopButtonSelectors: ['button[aria-label="Stop Response"]', 'button[aria-label="Stop response"]', 'button[aria-label="Stop"]'],
   },
   gemini: {
-    schemaVersion: 1,
-    adapterVersion: 3,
+    schemaVersion: 2,
+    adapterVersion: 4,
     urls: {
       app: 'https://gemini.google.com/app',
       login: 'https://gemini.google.com/app',
@@ -66,7 +66,10 @@ const expected = {
     sendButtonSelectors: ['button.send-button', 'button[aria-label="Send message"]', 'button[aria-label="Send"]', 'button[aria-label="傳送訊息"]', 'button[aria-label="送出"]', 'button[data-mat-icon-name="send"]', '.send-button-container button', 'button mat-icon[data-mat-icon-name="send"]', '.action-wrapper button[aria-label]', '.input-area-container button.send', 'button.send-message-button'],
     responseSelectors: ['.model-response-text .markdown', '.model-response-text', 'model-response .markdown', 'model-response message-content', '.response-content .markdown', '.message-content[data-message-id]'],
     loginDetectors: ['.ql-editor[contenteditable="true"]', 'rich-textarea [contenteditable="true"]', 'div[contenteditable="true"][aria-label="Enter a prompt here"]'],
-    loggedOutDetectors: [],
+    loggedOutDetectors: [
+      { selector: 'button', textIncludes: 'Sign in' },
+      { selector: 'button', textIncludes: '登录' },
+    ],
     thinkingDetectors: ['.loading-indicator', '.thinking-indicator', 'mat-progress-bar', 'button[aria-label="Stop response"]', 'button[aria-label="Stop"]', 'button[aria-label="停止回應"]', '.response-streaming', '[data-test-id="response-loading"]'],
     stopButtonSelectors: ['button[aria-label="Stop response"]', 'button[aria-label="Stop"]', 'button[aria-label="停止回應"]'],
   },
@@ -174,7 +177,7 @@ const expected = {
   },
   doubao: {
     schemaVersion: 2,
-    adapterVersion: 2,
+    adapterVersion: 3,
     urls: {
       app: 'https://www.doubao.com/chat',
       login: 'https://www.doubao.com/chat',
@@ -189,7 +192,14 @@ const expected = {
       'textarea',
     ],
     sendButtonSelectors: ['button[aria-label="发送"]', 'button[aria-label="Send"]', 'button[type="submit"]'],
-    responseSelectors: ['[data-testid="assistant-message"]', '.message-bubble.assistant', '[class*="markdown"]'],
+    responseSelectors: [
+      'div[data-testid="receive_message"]',
+      '[data-testid="message_content"]',
+      '[data-testid="message_text_content"]',
+      '[data-role="assistant"]',
+      '[class*="bot-message"]',
+      '[class*="markdown"]',
+    ],
     loginDetectors: [
       '[contenteditable="true"]',
       '[role="textbox"]',
@@ -201,8 +211,12 @@ const expected = {
       { selector: 'button', textIncludes: '登录' },
       { selector: 'button', textIncludes: 'Log In' },
     ],
-    thinkingDetectors: ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
-    stopButtonSelectors: ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+    thinkingDetectors: [
+      'button[aria-label="停止"]',
+      'button[aria-label="停止生成"]',
+      { selector: 'button', textIncludes: '停止生成' },
+    ],
+    stopButtonSelectors: ['button[aria-label="停止"]', 'button[aria-label="停止生成"]'],
   },
 };
 
@@ -345,8 +359,14 @@ assertEqual(
 // '发消息...'), not a textarea, so input detection is contenteditable-first
 // with textarea kept only as a last fallback. The send button does not exist
 // in the empty state and no assistant bubble is observable from an empty
-// chat, so send/response selectors stay generic fallbacks, none of them
-// verified against a signed-in session.
+// chat. Response selectors follow the data-testid / data-role markers used by
+// independent Doubao automation projects (receive_message / message_content /
+// message_text_content / data-role="assistant"), with the old generic
+// markdown fallback kept last; the earlier assistant-message / message-bubble
+// guesses matched nothing and starved completion (the wait never fired
+// checkIfDone). Thinking detection is the literal stop button
+// ('停止' / '停止生成'); the old [aria-label*="stop" i] substring matcher
+// could match unrelated controls and hold the wait forever.
 const doubaoAdapter = JSON.parse(await readFile(path.join(adapterDir, 'doubao.json'), 'utf8'));
 assertEqual(doubaoAdapter.urls.match, ['www.doubao.com/*', 'doubao.com/*'], 'doubao.initialSeed.appScopes');
 assertEqual(doubaoAdapter.urls.ssoMatch, undefined, 'doubao.initialSeed.ssoScopes');
@@ -361,7 +381,14 @@ assertEqual(
 );
 assertEqual(
   doubaoAdapter.responseSelectors,
-  ['[data-testid="assistant-message"]', '.message-bubble.assistant', '[class*="markdown"]'],
+  [
+    'div[data-testid="receive_message"]',
+    '[data-testid="message_content"]',
+    '[data-testid="message_text_content"]',
+    '[data-role="assistant"]',
+    '[class*="bot-message"]',
+    '[class*="markdown"]',
+  ],
   'doubao.initialSeed.responseSelectors',
 );
 assertEqual(
@@ -375,12 +402,16 @@ assertEqual(
 );
 assertEqual(
   doubaoAdapter.thinkingDetectors,
-  ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  [
+    'button[aria-label="停止"]',
+    'button[aria-label="停止生成"]',
+    { selector: 'button', textIncludes: '停止生成' },
+  ],
   'doubao.initialSeed.thinkingDetectors',
 );
 assertEqual(
   doubaoAdapter.stopButtonSelectors,
-  ['button[aria-label="停止"]', '[aria-label*="stop" i]', '[data-testid*="stop" i]'],
+  ['button[aria-label="停止"]', 'button[aria-label="停止生成"]'],
   'doubao.initialSeed.stopButtonSelectors',
 );
 assertEqual(
